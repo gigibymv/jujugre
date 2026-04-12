@@ -2,6 +2,7 @@
 
 import { useUserPlan } from '@/components/user-plan-provider';
 import { PageShell } from '@/components/page-shell';
+import { ContentHeader } from '@/components/content-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -57,7 +58,7 @@ export default function ModuleDetailPage() {
         Study plan
       </Link>
 
-      <header className="mb-8">
+      <ContentHeader eyebrow="Module">
         <div className="mb-2 flex flex-wrap items-center gap-2">
           <h1 className="font-serif text-3xl font-normal tracking-tight text-foreground">
             Week {module.weekNumber}: {module.title}
@@ -72,7 +73,7 @@ export default function ModuleDetailPage() {
           </div>
           <Progress value={pct} />
         </div>
-      </header>
+      </ContentHeader>
 
       <div className="space-y-6">
         {module.parts.map((part) => (

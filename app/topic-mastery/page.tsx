@@ -1,6 +1,7 @@
 'use client';
 
 import { PageShell } from '@/components/page-shell';
+import { ContentHeader } from '@/components/content-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -171,15 +172,11 @@ export default function TopicMasteryPage() {
 
   return (
     <PageShell>
-      <header className="mb-page-section border-b border-border pb-6">
-        <p className="page-eyebrow mb-2">Topics</p>
-        <h1 className="mb-2 font-serif text-3xl font-normal tracking-tight text-foreground md:text-4xl">
-          Topic mastery
-        </h1>
-        <p className="text-muted-foreground">
-          Track proficiency across GRE quantitative topics with multi-signal analysis.
-        </p>
-      </header>
+      <ContentHeader
+        eyebrow="Topics"
+        title="Topic mastery"
+        description="Track proficiency across GRE quantitative topics with multi-signal analysis."
+      />
 
       <div className="mb-page-block">
         <ErrorPatternInsights patterns={mockErrorPatterns} />

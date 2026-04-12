@@ -62,6 +62,10 @@
   --app-nav-mark: #4a5a4e;
   --app-nav-pill: #3a3235;
   --app-nav-pill-foreground: #c9bfb4;
+
+  /* Stitch “editorial chips” (sage) — plum primary stays separate */
+  --editorial-chip-bg: #d3e8d6;
+  --editorial-chip-fg: #56695b;
 }
 
 .dark {
@@ -230,6 +234,30 @@
   /** Eyebrow / kicker (page + card stat labels) */
   .page-eyebrow {
     @apply font-sans text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground;
+  }
+
+  /** Selectable chips (onboarding weak areas) — matches Stitch Jujugre Academic */
+  .editorial-chip {
+    @apply rounded-xl border border-transparent px-3 py-2.5 text-left text-sm font-medium transition-[colors,box-shadow] duration-150 ease-out;
+    background-color: var(--editorial-chip-bg);
+    color: var(--editorial-chip-fg);
+  }
+
+  .editorial-chip-inactive {
+    @apply border-border/50 bg-secondary/40 text-foreground hover:border-border hover:bg-secondary/70;
+  }
+
+  .editorial-chip-active {
+    @apply ring-2 ring-primary/30 ring-offset-2 ring-offset-background;
+    background-color: var(--editorial-chip-bg);
+    color: var(--editorial-chip-fg);
+  }
+
+  /** Coach assistant bubbles — light sage wash on cream system */
+  .coach-bubble-assistant {
+    @apply rounded-xl border p-4;
+    background-color: color-mix(in srgb, var(--accent) 14%, var(--card));
+    border-color: color-mix(in srgb, var(--accent) 32%, var(--border));
   }
 
   /** Vertical rhythm between major blocks */

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { CoachMessageBody } from '@/components/coach-message-body';
 import { PageShell } from '@/components/page-shell';
+import { ContentHeader } from '@/components/content-header';
 import { mockCoachMessages } from '@/lib/mock-data';
 import { useState } from 'react';
 import {
@@ -154,8 +155,7 @@ export default function CoachPage() {
 
   return (
     <PageShell narrow>
-      <header className="mb-page-section border-b border-border pb-8">
-        <p className="page-eyebrow mb-2">Coach</p>
+      <ContentHeader eyebrow="Coach">
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-md border border-accent/40 bg-accent/15">
             <Sparkles className="h-5 w-5 text-accent" aria-hidden />
@@ -169,7 +169,7 @@ export default function CoachPage() {
             </p>
           </div>
         </div>
-      </header>
+      </ContentHeader>
 
       <Card className="mb-page-block bg-secondary/40">
         <CardContent className="pt-6">
@@ -232,7 +232,7 @@ export default function CoachPage() {
                           <Sparkles className="h-4 w-4 text-accent" aria-hidden />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="rounded-lg border border-border bg-muted/30 p-4">
+                          <div className="coach-bubble-assistant">
                             <CoachMessageBody
                               content={msg.content}
                               className="text-sm leading-relaxed text-foreground"
@@ -267,7 +267,7 @@ export default function CoachPage() {
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-accent/30 bg-accent/10">
                         <Loader2 className="h-4 w-4 animate-spin text-accent" aria-hidden />
                       </div>
-                      <div className="flex flex-1 items-center gap-2 rounded-lg border border-border bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
+                      <div className="coach-bubble-assistant flex flex-1 items-center gap-2 px-4 py-3 text-xs text-muted-foreground">
                         Connecting…
                       </div>
                     </div>
@@ -284,7 +284,7 @@ export default function CoachPage() {
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="rounded-lg border border-border bg-muted/30 p-4">
+                        <div className="coach-bubble-assistant">
                           <CoachMessageBody
                             content={streamBuffer || '…'}
                             className="text-sm leading-relaxed text-foreground"

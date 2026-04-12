@@ -1,6 +1,7 @@
 'use client';
 
 import { PageShell } from '@/components/page-shell';
+import { ContentHeader } from '@/components/content-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -48,15 +49,11 @@ export default function ErrorLogPage() {
 
   return (
     <PageShell>
-      <header className="mb-page-section border-b border-border pb-6">
-        <p className="page-eyebrow mb-2">Review</p>
-        <h1 className="mb-2 font-serif text-3xl font-normal tracking-tight text-foreground md:text-4xl">
-          Error log
-        </h1>
-        <p className="text-muted-foreground">
-          Turn mistakes into reusable learning. Each error is a data point on your path.
-        </p>
-      </header>
+      <ContentHeader
+        eyebrow="Review"
+        title="Error log"
+        description="Turn mistakes into reusable learning. Each error is a data point on your path."
+      />
 
       <div className="mb-page-section grid grid-cols-1 gap-6 md:grid-cols-4">
         <Card>
@@ -197,7 +194,7 @@ export default function ErrorLogPage() {
                 key={error.id}
                 className={`border-2 transition-colors duration-150 ease-out ${
                   error.reviewed
-                    ? 'border-border bg-muted/20'
+                    ? 'border-accent/30 bg-accent/[0.09]'
                     : isReviewDue
                       ? 'border-muted-foreground/35 bg-muted/30'
                       : 'border-border bg-card'

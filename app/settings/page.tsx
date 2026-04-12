@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageShell } from '@/components/page-shell';
+import { ContentHeader } from '@/components/content-header';
 import { useUserPlan } from '@/components/user-plan-provider';
 import { Lock, Bell, BookOpen, Calendar, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
@@ -22,13 +23,11 @@ export default function SettingsPage() {
 
   return (
     <PageShell narrow>
-      <header className="mb-page-section border-b border-border pb-8">
-        <p className="page-eyebrow mb-2">Account</p>
-        <h1 className="font-serif text-3xl font-normal tracking-tight text-foreground md:text-4xl">
-          Settings
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">Profile, plan, and preferences</p>
-      </header>
+      <ContentHeader
+        eyebrow="Account"
+        title="Settings"
+        description="Profile, plan, and preferences"
+      />
 
       <Card className="mb-6">
         <CardHeader>

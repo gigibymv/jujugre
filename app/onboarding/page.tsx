@@ -37,7 +37,11 @@ export default function OnboardingPage() {
   return (
     <div className="flex min-h-[calc(100dvh-4rem)] items-center justify-center bg-surface-canvas px-4 py-10">
       <div className="w-full max-w-2xl">
-        <div className="mb-8">
+        <div className="mb-8 text-center">
+          <p className="page-eyebrow mb-2">Onboarding</p>
+          <h1 className="mb-6 font-serif text-2xl font-normal tracking-tight text-foreground md:text-3xl">
+            Welcome — let&apos;s tune your plan
+          </h1>
           <div
             className="mb-4 flex gap-2"
             role="group"
@@ -102,9 +106,9 @@ export default function OnboardingPage() {
                         key={option.value}
                         type="button"
                         onClick={() => setHoursPerWeek(String(option.value))}
-                        className={`w-full rounded-lg border-2 p-4 text-left transition-colors duration-150 ease-out ${
+                        className={`w-full rounded-xl border-2 p-4 text-left transition-[colors,box-shadow] duration-150 ease-out ${
                           hoursPerWeek === String(option.value)
-                            ? 'border-primary bg-muted/60'
+                            ? 'border-primary bg-secondary/50 ring-2 ring-primary/20'
                             : 'border-border hover:border-muted-foreground/30'
                         }`}
                       >
@@ -129,10 +133,8 @@ export default function OnboardingPage() {
                         key={area}
                         type="button"
                         onClick={() => toggleWeakArea(area)}
-                        className={`rounded-lg border-2 p-3 text-left transition-colors duration-150 ease-out ${
-                          weakAreas.includes(area)
-                            ? 'border-primary bg-muted/60'
-                            : 'border-border hover:border-muted-foreground/30'
+                        className={`editorial-chip flex w-full items-center gap-2 ${
+                          weakAreas.includes(area) ? 'editorial-chip-active' : 'editorial-chip-inactive'
                         }`}
                       >
                         <div className="flex items-center gap-2">

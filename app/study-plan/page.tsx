@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { PageShell } from '@/components/page-shell';
+import { ContentHeader } from '@/components/content-header';
 import { useUserPlan } from '@/components/user-plan-provider';
 import Link from 'next/link';
 import {
@@ -48,15 +49,11 @@ export default function StudyPlanPage() {
 
   return (
     <PageShell>
-      <header className="mb-page-section border-b border-border pb-8">
-        <p className="page-eyebrow mb-2">Plan</p>
-        <h1 className="font-serif text-3xl font-normal tracking-tight text-foreground md:text-4xl">
-          Study plan
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          GregMat &ldquo;I&apos;m Overwhelmed&rdquo; · foundation + strategy block
-        </p>
-      </header>
+      <ContentHeader
+        eyebrow="Plan"
+        title="Your study plan"
+        description={'GregMat "I\'m Overwhelmed" · foundation + strategy block'}
+      />
 
       {plan.latenessState !== 'on_track' && (
         <Card className="mb-page-block border-l-[3px] border-l-destructive bg-secondary/60">

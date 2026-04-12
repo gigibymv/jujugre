@@ -84,7 +84,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      <header className="mb-page-section border-b border-border pb-8">
+      <header className="mb-page-section border-b border-border/35 pb-8">
         <p className="page-eyebrow mb-2">Dashboard</p>
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <blockquote
