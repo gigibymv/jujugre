@@ -118,7 +118,7 @@ export default function Dashboard() {
         <p className="mt-4 text-sm text-muted-foreground">{supportiveMessage}</p>
       </header>
 
-      <Card className="mb-page-section border-l-[3px] border-l-accent">
+      <Card className="mb-page-section border-l-[3px] border-l-primary">
         <CardContent className="space-y-4 pt-6">
           <div>
             <p className="page-eyebrow">Today&apos;s focus</p>
