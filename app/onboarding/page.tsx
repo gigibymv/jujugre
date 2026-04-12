@@ -18,21 +18,12 @@ export default function OnboardingPage() {
   const [targetDate, setTargetDate] = useState('');
   const [hoursPerWeek, setHoursPerWeek] = useState('10');
   const [weakAreas, setWeakAreas] = useState<string[]>([]);
-  const [confidence, setConfidence] = useState(3);
   const [agreed, setAgreed] = useState(false);
 
-  const weakAreaOptions = [
-    'Fractions',
-    'Algebra',
-    'Geometry',
-    'Data Analysis',
-    'Probability',
-  ];
+  const weakAreaOptions = ['Fractions', 'Algebra', 'Geometry', 'Data Analysis', 'Probability'];
 
   const toggleWeakArea = (area: string) => {
-    setWeakAreas(prev =>
-      prev.includes(area) ? prev.filter(a => a !== area) : [...prev, area]
-    );
+    setWeakAreas((prev) => (prev.includes(area) ? prev.filter((a) => a !== area) : [...prev, area]));
   };
 
   const handleNext = () => {
@@ -44,29 +35,27 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#faf8f3] flex items-center justify-center py-8 px-4">
+    <div className="flex min-h-[calc(100dvh-4rem)] items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-2xl">
-        {/* Progress */}
         <div className="mb-8">
-          <div className="flex gap-2 mb-4">
-            {[1, 2, 3, 4].map(s => (
+          <div className="mb-4 flex gap-2">
+            {[1, 2, 3, 4].map((s) => (
               <div
                 key={s}
-                className={`h-2 flex-1 rounded-full ${
-                  s <= step ? 'bg-[#3d2f3f]' : 'bg-[#ede8df]'
+                className={`h-2 flex-1 rounded-full transition-colors duration-150 ease-out ${
+                  s <= step ? 'bg-primary' : 'bg-muted'
                 }`}
               />
             ))}
           </div>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             Step {step} of 4
           </p>
         </div>
 
-        {/* Card Content */}
-        <Card className="border-0 shadow-lg bg-white">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-2xl font-light text-[#3d2f3f]">
+            <CardTitle className="font-serif text-2xl font-normal tracking-tight text-foreground">
               {step === 1 && 'When is your GRE?'}
               {step === 2 && 'How much time can you commit?'}
               {step === 3 && 'Where do you need the most help?'}
@@ -74,12 +63,11 @@ export default function OnboardingPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Step 1: Target Date */}
             {step === 1 && (
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="targetDate" className="text-slate-700 font-medium">
-                    Target GRE Date
+                  <Label htmlFor="targetDate" className="font-medium text-foreground">
+                    Target GRE date
                   </Label>
                   <Input
                     id="targetDate"
@@ -88,37 +76,35 @@ export default function OnboardingPage() {
                     onChange={(e) => setTargetDate(e.target.value)}
                     className="mt-2"
                   />
-                  <p className="text-sm text-slate-500 mt-2">
-                    Choose a date 3-4 months from now for best results
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Choose a date 3–4 months from now for best results.
                   </p>
                 </div>
               </div>
             )}
 
-            {/* Step 2: Hours per Week */}
             {step === 2 && (
               <div className="space-y-4">
                 <div>
-                  <Label className="text-slate-700 font-medium">
-                    Study Hours Per Week
-                  </Label>
+                  <Label className="font-medium text-foreground">Study hours per week</Label>
                   <div className="mt-4 space-y-3">
                     {[
-                      { value: 5, label: '5 hours / week', desc: 'Light (1 hr/day)' },
-                      { value: 10, label: '10 hours / week', desc: 'Moderate (2 hrs/day)' },
+                      { value: 5, label: '5 hours / week', desc: 'Light (about 1 hr/day)' },
+                      { value: 10, label: '10 hours / week', desc: 'Moderate (about 2 hrs/day)' },
                       { value: 20, label: '20 hours / week', desc: 'Intensive (3+ hrs/day)' },
-                    ].map(option => (
+                    ].map((option) => (
                       <button
                         key={option.value}
+                        type="button"
                         onClick={() => setHoursPerWeek(String(option.value))}
-                        className={`w-full p-4 rounded-lg border-2 transition-colors text-left ${
+                        className={`w-full rounded-lg border-2 p-4 text-left transition-colors duration-150 ease-out ${
                           hoursPerWeek === String(option.value)
-                            ? 'border-[#3d2f3f] bg-[#f5f1e8]'
-                            : 'border-slate-200 hover:border-slate-300'
+                            ? 'border-primary bg-muted/60'
+                            : 'border-border hover:border-muted-foreground/30'
                         }`}
                       >
-                        <div className="font-medium text-[#3d2f3f]">{option.label}</div>
-                        <div className="text-sm text-slate-500">{option.desc}</div>
+                        <div className="font-medium text-foreground">{option.label}</div>
+                        <div className="text-sm text-muted-foreground">{option.desc}</div>
                       </button>
                     ))}
                   </div>
@@ -126,22 +112,22 @@ export default function OnboardingPage() {
               </div>
             )}
 
-            {/* Step 3: Weak Areas */}
             {step === 3 && (
               <div className="space-y-4">
                 <div>
-                  <Label className="text-slate-700 font-medium mb-3 block">
+                  <Label className="mb-3 block font-medium text-foreground">
                     Select your weak areas (optional)
                   </Label>
                   <div className="grid grid-cols-2 gap-3">
-                    {weakAreaOptions.map(area => (
+                    {weakAreaOptions.map((area) => (
                       <button
                         key={area}
+                        type="button"
                         onClick={() => toggleWeakArea(area)}
-                        className={`p-3 rounded-lg border-2 transition-colors text-left ${
+                        className={`rounded-lg border-2 p-3 text-left transition-colors duration-150 ease-out ${
                           weakAreas.includes(area)
-                            ? 'border-[#3d2f3f] bg-[#f5f1e8]'
-                            : 'border-slate-200 hover:border-slate-300'
+                            ? 'border-primary bg-muted/60'
+                            : 'border-border hover:border-muted-foreground/30'
                         }`}
                       >
                         <div className="flex items-center gap-2">
@@ -149,7 +135,7 @@ export default function OnboardingPage() {
                             checked={weakAreas.includes(area)}
                             onCheckedChange={() => toggleWeakArea(area)}
                           />
-                          <span className="font-medium text-[#3d2f3f]">{area}</span>
+                          <span className="font-medium text-foreground">{area}</span>
                         </div>
                       </button>
                     ))}
@@ -158,55 +144,54 @@ export default function OnboardingPage() {
               </div>
             )}
 
-            {/* Step 4: Review */}
             {step === 4 && (
               <div className="space-y-4">
-                <div className="bg-slate-50 p-4 rounded-lg space-y-3">
+                <div className="surface-quiet space-y-3 rounded-lg p-4">
                   <div className="flex items-start gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-[#7a8d7e] mt-0.5 flex-shrink-0" />
+                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-accent" aria-hidden />
                     <div>
-                      <p className="font-medium text-[#3d2f3f]">GRE Date Set</p>
-                      <p className="text-sm text-slate-500">{targetDate || 'Not set'}</p>
+                      <p className="font-medium text-foreground">GRE date set</p>
+                      <p className="text-sm text-muted-foreground">{targetDate || 'Not set'}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-[#7a8d7e] mt-0.5 flex-shrink-0" />
+                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-accent" aria-hidden />
                     <div>
-                      <p className="font-medium text-[#3d2f3f]">Study Plan</p>
-                      <p className="text-sm text-slate-500">{hoursPerWeek} hours per week</p>
+                      <p className="font-medium text-foreground">Study plan</p>
+                      <p className="text-sm text-muted-foreground">{hoursPerWeek} hours per week</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-[#7a8d7e] mt-0.5 flex-shrink-0" />
+                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-accent" aria-hidden />
                     <div>
-                      <p className="font-medium text-[#3d2f3f]">Weak Areas</p>
-                      <p className="text-sm text-slate-500">
+                      <p className="font-medium text-foreground">Weak areas</p>
+                      <p className="text-sm text-muted-foreground">
                         {weakAreas.length > 0 ? weakAreas.join(', ') : 'None selected'}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-[#f5f1e8] p-4 rounded-lg border border-[#e8e3db]">
-                  <p className="text-sm text-slate-700 mb-3">
-                    ✨ You'll follow the proven 12-week GregMat plan, customized to your weak areas. Our AI coach will guide you with rigorous explanations and track your progress across all 28 GRE quant topics.
+                <div className="rounded-lg border border-border bg-muted/40 p-4">
+                  <p className="mb-3 text-sm text-foreground">
+                    You will follow the 12-week GregMat-style plan, adjusted for your weak areas. The coach
+                    helps with explanations and you can track progress across GRE quant topics.
                   </p>
                   <div className="flex items-center gap-2">
                     <Checkbox
                       checked={agreed}
-                      onCheckedChange={(val) => setAgreed(val as boolean)}
+                      onCheckedChange={(val) => setAgreed(val === true)}
                       id="agree"
                     />
-                    <Label htmlFor="agree" className="text-sm text-slate-700 cursor-pointer">
-                      I'm ready to start my GRE prep journey
+                    <Label htmlFor="agree" className="cursor-pointer text-sm text-foreground">
+                      I am ready to start my GRE prep
                     </Label>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Buttons */}
-            <div className="flex gap-3 pt-4 border-t border-slate-200">
+            <div className="flex gap-3 border-t border-border pt-4">
               {step > 1 && (
                 <Button variant="outline" onClick={handleBack} className="flex-1">
                   Back
@@ -215,20 +200,17 @@ export default function OnboardingPage() {
               {step < 4 ? (
                 <Button
                   onClick={handleNext}
-                  disabled={
-                    (step === 1 && !targetDate) ||
-                    (step === 2 && !hoursPerWeek)
-                  }
-                  className="flex-1 gap-2 bg-[#3d2f3f] hover:bg-[#5a4a5c] text-white"
+                  disabled={(step === 1 && !targetDate) || (step === 2 && !hoursPerWeek)}
+                  className="flex-1 gap-2"
                 >
                   Next
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight className="h-4 w-4" />
                 </Button>
               ) : (
                 <Button
                   type="button"
                   disabled={!agreed}
-                  className="flex-1 gap-2 bg-[#3d2f3f] hover:bg-[#5a4a5c] text-white"
+                  className="flex-1 gap-2"
                   onClick={() => {
                     const target = new Date(`${targetDate}T12:00:00`);
                     completeOnboarding({
@@ -239,17 +221,20 @@ export default function OnboardingPage() {
                     router.push('/');
                   }}
                 >
-                  Start Studying
-                  <ChevronRight className="w-4 h-4" />
+                  Start studying
+                  <ChevronRight className="h-4 w-4" />
                 </Button>
               )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Footer */}
-        <p className="text-center text-sm text-slate-500 mt-6">
-          You can adjust your plan anytime in Settings.
+        <p className="mt-6 text-center text-sm text-muted-foreground">
+          You can adjust your plan anytime in{' '}
+          <Link href="/settings" className="text-foreground underline-offset-4 hover:underline">
+            Settings
+          </Link>
+          .
         </p>
       </div>
     </div>

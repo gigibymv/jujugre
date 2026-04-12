@@ -1,8 +1,6 @@
 'use client';
 
-// Trigger full rebuild - v6
-// Cache invalidation timestamp: 2026-03-17T21:54:00Z
-
+import { PageShell } from '@/components/page-shell';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,333 +13,349 @@ export default function ErrorLogPage() {
   const [sortBy, setSortBy] = useState<'review_due' | 'recent' | 'topic'>('review_due');
   const [filterReviewed, setFilterReviewed] = useState<'all' | 'unreviewed' | 'reviewed'>('unreviewed');
 
-  // Filter
   let filtered = mockErrorLogEntries;
   if (filterReviewed === 'unreviewed') {
-    filtered = filtered.filter(e => !e.reviewed);
+    filtered = filtered.filter((e) => !e.reviewed);
   } else if (filterReviewed === 'reviewed') {
-    filtered = filtered.filter(e => e.reviewed);
+    filtered = filtered.filter((e) => e.reviewed);
   }
 
-  // Sort
   const sorted = [...filtered].sort((a, b) => {
     if (sortBy === 'review_due') {
       return a.reviewDueDate.getTime() - b.reviewDueDate.getTime();
-    } else if (sortBy === 'recent') {
-      return b.createdAt.getTime() - a.createdAt.getTime();
-    } else {
-      return a.topic.localeCompare(b.topic);
     }
+    if (sortBy === 'recent') {
+      return b.createdAt.getTime() - a.createdAt.getTime();
+    }
+    return a.topic.localeCompare(b.topic);
   });
 
-  const unreviewedCount = mockErrorLogEntries.filter(e => !e.reviewed).length;
-  const reviewDueNow = sorted.filter(e => e.reviewDueDate <= new Date()).length;
+  const unreviewedCount = mockErrorLogEntries.filter((e) => !e.reviewed).length;
+  const reviewDueNow = sorted.filter((e) => e.reviewDueDate <= new Date()).length;
 
-  // Group errors by category for insight
-  const categoryStats = mockErrorLogEntries.reduce((acc: Record<string, number>, err) => {
-    const cat = err.errorCategory;
-    if (!acc[cat]) acc[cat] = 0;
-    acc[cat]++;
-    return acc;
-  }, {});
+  const categoryStats = mockErrorLogEntries.reduce(
+    (acc: Record<string, number>, err) => {
+      const cat = err.errorCategory;
+      acc[cat] = (acc[cat] ?? 0) + 1;
+      return acc;
+    },
+    {}
+  );
 
-  const topProblematicCategory = Object.entries(categoryStats).sort((a, b) => b[1] - a[1])[0] as [string, number] | undefined;
+  const topProblematicCategory = Object.entries(categoryStats).sort((a, b) => b[1] - a[1])[0] as
+    | [string, number]
+    | undefined;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#faf8f3] via-white to-slate-50">
-      <div className="max-w-5xl mx-auto px-6 py-10">
-        
-        {/* Header */}
-        <div className="mb-10 pb-6 border-b border-slate-200">
-          <h1 className="text-4xl font-light text-slate-900 mb-2">Error Log</h1>
-          <p className="text-slate-600">
-            Turn mistakes into reusable learning. Every error is a data point on your journey.
-          </p>
-        </div>
+    <PageShell>
+      <header className="mb-10 border-b border-border pb-6">
+        <h1 className="mb-2 font-serif text-3xl font-normal tracking-tight text-foreground md:text-4xl">
+          Error log
+        </h1>
+        <p className="text-muted-foreground">
+          Turn mistakes into reusable learning. Each error is a data point on your path.
+        </p>
+      </header>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Errors</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-slate-900">{mockErrorLogEntries.length}</div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Unreviewed</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className={`text-3xl font-bold ${unreviewedCount > 0 ? 'text-[#a88080]' : 'text-[#7a8d7e]'}`}>
-                {unreviewedCount}
-              </div>
-              {reviewDueNow > 0 && (
-                <p className="text-xs text-[#a88080] font-semibold mt-1">{reviewDueNow} due now</p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Reviewed</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-[#7a8d7e]">
-                {mockErrorLogEntries.filter(e => e.reviewed).length}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Top Issue</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm font-bold text-slate-900">
-                {topProblematicCategory ? topProblematicCategory[0].replace(/_/g, ' ') : 'N/A'}
-              </div>
-              {topProblematicCategory && (
-                <p className="text-xs text-slate-500 mt-1">{String(topProblematicCategory[1])} errors</p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Alert: Review Due Now */}
-        {reviewDueNow > 0 && (
-          <Card className="border-0 shadow-sm bg-gradient-to-r from-amber-50 to-orange-50 mb-8 border-l-4 border-l-amber-400">
-            <CardContent className="pt-4">
-              <div className="flex items-start gap-3">
-                <Clock className="w-5 h-5 text-[#a88080] flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-semibold text-[#a88080]">
-                    {reviewDueNow} error{reviewDueNow !== 1 ? 's' : ''} due for review
-                  </p>
-                  <p className="text-sm text-[#a88080] mt-1">
-                    Reviewing mistakes within 48 hours drastically improves retention. Focus on these first.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Controls */}
-        <div className="flex flex-col md:flex-row gap-3 mb-8">
-          <div className="flex gap-1 bg-white rounded-lg shadow-sm p-1 border border-slate-200">
-            <Button
-              variant={filterReviewed === 'unreviewed' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setFilterReviewed('unreviewed')}
-              className="text-xs"
-            >
-              Unreviewed ({unreviewedCount})
-            </Button>
-            <Button
-              variant={filterReviewed === 'reviewed' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setFilterReviewed('reviewed')}
-              className="text-xs"
-            >
-              Reviewed ({mockErrorLogEntries.filter(e => e.reviewed).length})
-            </Button>
-            <Button
-              variant={filterReviewed === 'all' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setFilterReviewed('all')}
-              className="text-xs"
-            >
-              All
-            </Button>
-          </div>
-
-          <div className="flex gap-2 bg-white rounded-lg shadow-sm p-1 border border-slate-200 md:ml-auto">
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="text-xs px-3 py-2 bg-white border-0 rounded text-slate-700"
-            >
-              <option value="review_due">Review Due (Priority)</option>
-              <option value="recent">Most Recent</option>
-              <option value="topic">By Topic</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Error Entries */}
-        <div className="space-y-3">
-          {sorted.length === 0 ? (
-            <Card className="border-0 shadow-sm bg-green-50 border-l-4 border-l-green-500">
-              <CardContent className="pt-6 pb-6 text-center">
-                <CheckCircle2 className="w-12 h-12 text-[#7a8d7e] mx-auto mb-3" />
-                <p className="font-semibold text-[#a88080] mb-1">All errors reviewed!</p>
-                <p className="text-sm text-[#a88080]">Keep up the excellent work. Continue practicing to avoid future mistakes.</p>
-              </CardContent>
-            </Card>
-          ) : (
-            sorted.map(error => {
-              const topicLabel = error.subtopic.replace(/_/g, ' ').split(' ').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-              const isReviewDue = error.reviewDueDate <= new Date();
-              const daysUntilDue = Math.ceil((error.reviewDueDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-
-              return (
-                <Card 
-                  key={error.id} 
-                  className={`border-2 shadow-sm hover:shadow-md transition-all ${
-                    error.reviewed 
-                      ? 'border-slate-200 bg-slate-50' 
-                      : isReviewDue
-                      ? 'border-amber-200 bg-amber-50'
-                      : 'border-slate-200 bg-white'
-                  }`}
-                >
-                  <CardContent className="pt-4">
-                    <div className="space-y-4">
-                      {/* Header: Topic, Category, Status */}
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="space-y-2 flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <Badge variant="outline" className="text-xs bg-white">{topicLabel}</Badge>
-                            <Badge className="text-xs bg-[#f5f1e8] text-[#a88080] border-[#e8e3db]" variant="outline">
-                              {error.errorCategory.replace(/_/g, ' ')}
-                            </Badge>
-                            {error.reviewed && (
-                              <Badge className="text-xs bg-green-100 text-green-700 border-green-200">
-                                ✓ Reviewed
-                              </Badge>
-                            )}
-                          </div>
-                          <h3 className="font-semibold text-slate-900 text-sm leading-snug">
-                            {error.problem}
-                          </h3>
-                        </div>
-
-                        {/* Status Indicator */}
-                        <div className="flex-shrink-0">
-                          {!error.reviewed && isReviewDue && (
-                            <div className="text-right">
-                              <AlertCircle className="w-5 h-5 text-[#a88080] mb-1" />
-                              <p className="text-xs font-semibold text-[#a88080]">Due Now</p>
-                            </div>
-                          )}
-                          {!error.reviewed && !isReviewDue && (
-                            <div className="text-right">
-                              <Clock className="w-5 h-5 text-slate-400 mb-1" />
-                              <p className="text-xs text-slate-600">{daysUntilDue}d away</p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Student vs Correct Answer */}
-                      <div className="grid grid-cols-2 gap-3 text-sm">
-                        <div className="p-3 rounded-lg bg-red-50 border border-red-200">
-                          <div className="text-xs font-semibold text-red-700 uppercase tracking-wide mb-1">You Answered</div>
-                          <div className="font-mono text-red-900 font-semibold">{error.studentAnswer}</div>
-                        </div>
-                        <div className="p-3 rounded-lg bg-green-50 border border-green-200">
-                          <div className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-1">Correct Answer</div>
-                          <div className="font-mono text-[#a88080] font-semibold">{error.correctAnswer}</div>
-                        </div>
-                      </div>
-
-                      {/* Explanation */}
-                      <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
-                        <div className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-2">Why This Matters</div>
-                        <p className="text-sm text-slate-800 leading-relaxed">{error.explanation}</p>
-                      </div>
-
-                      {/* Protocol Elements */}
-                      {error.protocolElements && error.protocolElements.length > 0 && (
-                        <div className="p-3 rounded-lg bg-[#f5f1e8] border border-[#e8e3db]">
-                          <div className="text-xs font-semibold text-[#a88080] uppercase tracking-wide mb-2 flex items-center gap-2">
-                            <Zap className="w-4 h-4" /> Learning Concepts
-                          </div>
-                          <div className="flex flex-wrap gap-1">
-                            {error.protocolElements.map((el: string) => (
-                              <Badge key={el} variant="outline" className="text-xs bg-white text-[#a88080] border-[#e8e3db]">
-                                {el.replace(/_/g, ' ')}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Source Reference */}
-                      <div className="text-xs text-slate-600 flex items-center gap-1">
-                        <BookOpen className="w-4 h-4" />
-                        <span className="italic">Source: {error.sourceReference}</span>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex gap-2 pt-2 border-t border-slate-200">
-                        {!error.reviewed && (
-                          <>
-                            <Link href={`/coach?error=${error.id}`} className="flex-1">
-                              <Button variant="default" size="sm" className="w-full text-xs">
-                                Discuss with Coach
-                              </Button>
-                            </Link>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="w-full text-xs"
-                              onClick={() => {
-                                // Mark as reviewed
-                                console.log('Marked', error.id, 'as reviewed');
-                              }}
-                            >
-                              Mark Reviewed
-                            </Button>
-                          </>
-                        )}
-                        {error.reviewed && (
-                          <Button variant="outline" size="sm" className="w-full text-xs">
-                            Review Again
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })
-          )}
-        </div>
-
-        {/* Guidance Card */}
-        <Card className="border-0 shadow-sm bg-gradient-to-br from-[#faf8f3] to-[#f5f1e8] mt-10">
-          <CardHeader>
-            <CardTitle className="text-base font-semibold text-slate-900">How to Use This Log</CardTitle>
+      <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Total errors
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3 text-sm text-slate-700">
-            <div className="flex gap-3">
-              <div className="text-lg font-bold text-slate-900 min-w-[2rem]">1</div>
-              <div>
-                <div className="font-semibold text-slate-900">Review Errors Due</div>
-                <div className="text-xs text-slate-600">Prioritize items marked "due now" to maximize learning impact.</div>
-              </div>
+          <CardContent>
+            <div className="text-3xl font-bold tabular-nums text-foreground">{mockErrorLogEntries.length}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Unreviewed
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div
+              className={`text-3xl font-bold tabular-nums ${unreviewedCount > 0 ? 'text-destructive' : 'text-chart-2'}`}
+            >
+              {unreviewedCount}
             </div>
-            <div className="flex gap-3">
-              <div className="text-lg font-bold text-slate-900 min-w-[2rem]">2</div>
-              <div>
-                <div className="font-semibold text-slate-900">Discuss with Coach</div>
-                <div className="text-xs text-slate-600">Use the AI Coach to deeply understand the concept behind each mistake.</div>
-              </div>
+            {reviewDueNow > 0 && (
+              <p className="mt-1 text-xs font-medium text-destructive">{reviewDueNow} due now</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Reviewed
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold tabular-nums text-chart-2">
+              {mockErrorLogEntries.filter((e) => e.reviewed).length}
             </div>
-            <div className="flex gap-3">
-              <div className="text-lg font-bold text-slate-900 min-w-[2rem]">3</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Top issue
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm font-bold text-foreground">
+              {topProblematicCategory ? topProblematicCategory[0].replace(/_/g, ' ') : 'N/A'}
+            </div>
+            {topProblematicCategory && (
+              <p className="mt-1 text-xs text-muted-foreground">{String(topProblematicCategory[1])} errors</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {reviewDueNow > 0 && (
+        <Card className="mb-8 border-l-4 border-l-chart-4 bg-muted/30">
+          <CardContent className="pt-4">
+            <div className="flex items-start gap-3">
+              <Clock className="mt-0.5 h-5 w-5 shrink-0 text-chart-4" aria-hidden />
               <div>
-                <div className="font-semibold text-slate-900">Practice Similar Problems</div>
-                <div className="text-xs text-slate-600">Once you understand the concept, drill similar problems until the pattern is automatic.</div>
+                <p className="font-semibold text-foreground">
+                  {reviewDueNow} error{reviewDueNow !== 1 ? 's' : ''} due for review
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Reviewing within 48 hours improves retention. Tackle these first.
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
+      )}
+
+      <div className="mb-8 flex flex-col gap-3 md:flex-row">
+        <div className="flex gap-1 rounded-lg border border-border bg-card p-1">
+          <Button
+            variant={filterReviewed === 'unreviewed' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setFilterReviewed('unreviewed')}
+            className="text-xs"
+          >
+            Unreviewed ({unreviewedCount})
+          </Button>
+          <Button
+            variant={filterReviewed === 'reviewed' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setFilterReviewed('reviewed')}
+            className="text-xs"
+          >
+            Reviewed ({mockErrorLogEntries.filter((e) => e.reviewed).length})
+          </Button>
+          <Button
+            variant={filterReviewed === 'all' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setFilterReviewed('all')}
+            className="text-xs"
+          >
+            All
+          </Button>
+        </div>
+
+        <div className="flex gap-2 rounded-lg border border-border bg-card p-1 md:ml-auto">
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as 'review_due' | 'recent' | 'topic')}
+            className="rounded-md border-0 bg-transparent px-3 py-2 text-xs text-foreground"
+          >
+            <option value="review_due">Review due (priority)</option>
+            <option value="recent">Most recent</option>
+            <option value="topic">By topic</option>
+          </select>
+        </div>
       </div>
-    </div>
+
+      <div className="space-y-3">
+        {sorted.length === 0 ? (
+          <Card className="border-l-4 border-l-chart-2 bg-muted/20">
+            <CardContent className="pb-6 pt-6 text-center">
+              <CheckCircle2 className="mx-auto mb-3 h-12 w-12 text-chart-2" aria-hidden />
+              <p className="mb-1 font-semibold text-foreground">All errors reviewed</p>
+              <p className="text-sm text-muted-foreground">
+                Keep practicing to stay ahead of new mistakes.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          sorted.map((error) => {
+            const topicLabel = error.subtopic
+              .replace(/_/g, ' ')
+              .split(' ')
+              .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+              .join(' ');
+            const isReviewDue = error.reviewDueDate <= new Date();
+            const daysUntilDue = Math.ceil(
+              (error.reviewDueDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+            );
+
+            return (
+              <Card
+                key={error.id}
+                className={`border-2 transition-colors duration-150 ease-out ${
+                  error.reviewed
+                    ? 'border-border bg-muted/20'
+                    : isReviewDue
+                      ? 'border-chart-4/40 bg-muted/30'
+                      : 'border-border bg-card'
+                }`}
+              >
+                <CardContent className="pt-4">
+                  <div className="space-y-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="outline" className="text-xs">
+                            {topicLabel}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            {error.errorCategory.replace(/_/g, ' ')}
+                          </Badge>
+                          {error.reviewed && (
+                            <Badge variant="secondary" className="gap-1 text-xs">
+                              <CheckCircle2 className="h-3 w-3" aria-hidden />
+                              Reviewed
+                            </Badge>
+                          )}
+                        </div>
+                        <h3 className="text-sm font-semibold leading-snug text-foreground">{error.problem}</h3>
+                      </div>
+
+                      <div className="shrink-0">
+                        {!error.reviewed && isReviewDue && (
+                          <div className="text-right">
+                            <AlertCircle className="mb-1 h-5 w-5 text-destructive" aria-hidden />
+                            <p className="text-xs font-semibold text-destructive">Due now</p>
+                          </div>
+                        )}
+                        {!error.reviewed && !isReviewDue && (
+                          <div className="text-right">
+                            <Clock className="mb-1 h-5 w-5 text-muted-foreground" aria-hidden />
+                            <p className="text-xs text-muted-foreground">{daysUntilDue}d away</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="rounded-lg border border-destructive/25 bg-destructive/5 p-3">
+                        <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-destructive">
+                          You answered
+                        </div>
+                        <div className="font-mono font-semibold text-foreground">{error.studentAnswer}</div>
+                      </div>
+                      <div className="rounded-lg border border-chart-2/30 bg-chart-2/5 p-3">
+                        <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-chart-2">
+                          Correct answer
+                        </div>
+                        <div className="font-mono font-semibold text-foreground">{error.correctAnswer}</div>
+                      </div>
+                    </div>
+
+                    <div className="surface-quiet rounded-lg p-3">
+                      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Why this matters
+                      </div>
+                      <p className="text-sm leading-relaxed text-foreground">{error.explanation}</p>
+                    </div>
+
+                    {error.protocolElements && error.protocolElements.length > 0 && (
+                      <div className="rounded-lg border border-border bg-muted/30 p-3">
+                        <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          <Zap className="h-4 w-4" aria-hidden />
+                          Learning concepts
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {error.protocolElements.map((el: string) => (
+                            <Badge key={el} variant="outline" className="text-xs">
+                              {el.replace(/_/g, ' ')}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <BookOpen className="h-4 w-4 shrink-0" aria-hidden />
+                      <span className="italic">Source: {error.sourceReference}</span>
+                    </div>
+
+                    <div className="flex gap-2 border-t border-border pt-2">
+                      {!error.reviewed && (
+                        <>
+                          <Link href={`/coach?error=${error.id}`} className="flex-1">
+                            <Button variant="default" size="sm" className="w-full text-xs">
+                              Discuss with coach
+                            </Button>
+                          </Link>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full text-xs"
+                            onClick={() => {
+                              console.log('Marked', error.id, 'as reviewed');
+                            }}
+                          >
+                            Mark reviewed
+                          </Button>
+                        </>
+                      )}
+                      {error.reviewed && (
+                        <Button variant="outline" size="sm" className="w-full text-xs">
+                          Review again
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })
+        )}
+      </div>
+
+      <Card className="mt-10">
+        <CardHeader>
+          <CardTitle className="text-base font-semibold text-foreground">How to use this log</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm text-muted-foreground">
+          {[
+            {
+              n: '1',
+              title: 'Review errors due',
+              body: 'Prioritize items marked “due now” for the biggest learning impact.',
+            },
+            {
+              n: '2',
+              title: 'Discuss with coach',
+              body: 'Use the coach to understand the concept behind each mistake.',
+            },
+            {
+              n: '3',
+              title: 'Practice similar problems',
+              body: 'Drill until the pattern feels automatic.',
+            },
+          ].map((item) => (
+            <div key={item.n} className="flex gap-3">
+              <div className="min-w-[2rem] text-lg font-bold text-foreground">{item.n}</div>
+              <div>
+                <div className="font-semibold text-foreground">{item.title}</div>
+                <div className="text-xs">{item.body}</div>
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    </PageShell>
   );
 }

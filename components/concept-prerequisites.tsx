@@ -22,45 +22,46 @@ export function ConceptPrerequisites({ prerequisites, topicMasteryMap }: Concept
     return null;
   }
 
-  const prerequisites_unlocked = prerequisites.filter(p => {
+  const prerequisites_unlocked = prerequisites.filter((p) => {
     const prereqMastery = topicMasteryMap[p.prerequisiteSubtopic];
     return prereqMastery && masteryLevelRank[prereqMastery] >= masteryLevelRank[p.minimumMasteryRequired];
   });
 
-  const prerequisites_locked = prerequisites.filter(p => {
+  const prerequisites_locked = prerequisites.filter((p) => {
     const prereqMastery = topicMasteryMap[p.prerequisiteSubtopic];
     return !prereqMastery || masteryLevelRank[prereqMastery] < masteryLevelRank[p.minimumMasteryRequired];
   });
 
   return (
-    <Card className="border-0 shadow-sm bg-gradient-to-br from-slate-50 to-indigo-50">
+    <Card>
       <CardHeader>
-        <CardTitle className="text-base font-semibold text-slate-900 flex items-center gap-2">
-          <Lock className="w-5 h-5 text-indigo-600" />
-          Learning Prerequisites
+        <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
+          <Lock className="h-5 w-5 text-muted-foreground" aria-hidden />
+          Learning prerequisites
         </CardTitle>
-        <p className="text-xs text-slate-600 mt-1">Concepts must be mastered in order to build strong foundations</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Foundational concepts should be solid before stacking harder material.
+        </p>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Unlocked prerequisites */}
         {prerequisites_unlocked.length > 0 && (
           <div>
-            <p className="text-xs font-semibold text-slate-700 mb-2 flex items-center gap-1">
-              <CheckCircle2 className="w-4 h-4 text-green-600" />
-              Ready to Learn ({prerequisites_unlocked.length})
+            <p className="mb-2 flex items-center gap-1 text-xs font-semibold text-foreground">
+              <CheckCircle2 className="h-4 w-4 text-chart-2" aria-hidden />
+              Ready to learn ({prerequisites_unlocked.length})
             </p>
             <div className="space-y-2">
               {prerequisites_unlocked.map((prereq, idx) => (
-                <div key={idx} className="p-3 rounded-lg bg-green-50 border border-green-200">
+                <div key={idx} className="rounded-lg border border-chart-2/30 bg-chart-2/5 p-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1">
-                      <p className="font-medium text-sm text-slate-900">
+                      <p className="text-sm font-medium text-foreground">
                         {prereq.subtopic.replace(/_/g, ' ')}
                       </p>
-                      <p className="text-xs text-slate-600 mt-0.5">{prereq.reason}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{prereq.reason}</p>
                     </div>
-                    <Badge className="bg-green-100 text-green-700 border-green-300 shrink-0">
-                      Prerequisite Met
+                    <Badge variant="outline" className="shrink-0 border-chart-2/40 bg-background text-chart-2">
+                      Prerequisite met
                     </Badge>
                   </div>
                 </div>
@@ -69,12 +70,11 @@ export function ConceptPrerequisites({ prerequisites, topicMasteryMap }: Concept
           </div>
         )}
 
-        {/* Locked prerequisites */}
         {prerequisites_locked.length > 0 && (
           <div>
-            <p className="text-xs font-semibold text-slate-700 mb-2 flex items-center gap-1">
-              <Lock className="w-4 h-4 text-amber-600" />
-              Prerequisites to Master ({prerequisites_locked.length})
+            <p className="mb-2 flex items-center gap-1 text-xs font-semibold text-foreground">
+              <Lock className="h-4 w-4 text-chart-4" aria-hidden />
+              Prerequisites to master ({prerequisites_locked.length})
             </p>
             <div className="space-y-2">
               {prerequisites_locked.map((prereq, idx) => {
@@ -82,25 +82,26 @@ export function ConceptPrerequisites({ prerequisites, topicMasteryMap }: Concept
                 const isNotStarted = !prereqMastery || prereqMastery === 'not_started';
 
                 return (
-                  <div key={idx} className="p-3 rounded-lg bg-amber-50 border border-amber-200">
+                  <div key={idx} className="rounded-lg border border-chart-4/35 bg-muted/40 p-3">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1">
-                        <p className="font-medium text-sm text-slate-900">
-                          Master: {prereq.prerequisiteSubtopic.replace(/_/g, ' ')} first
+                        <p className="text-sm font-medium text-foreground">
+                          Master {prereq.prerequisiteSubtopic.replace(/_/g, ' ')} first
                         </p>
-                        <p className="text-xs text-slate-600 mt-0.5">{prereq.reason}</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">{prereq.reason}</p>
                         <div className="mt-2">
-                          <p className="text-xs text-amber-700 font-medium">
-                            Current: <Badge variant="outline" className="text-xs ml-1">
-                              {isNotStarted ? 'Not Started' : prereqMastery?.replace(/_/g, ' ')}
+                          <p className="text-xs font-medium text-foreground">
+                            Current:{' '}
+                            <Badge variant="outline" className="ml-1 text-xs">
+                              {isNotStarted ? 'Not started' : prereqMastery?.replace(/_/g, ' ')}
                             </Badge>
                           </p>
-                          <p className="text-xs text-amber-700 mt-1">
+                          <p className="mt-1 text-xs text-muted-foreground">
                             Required: {prereq.minimumMasteryRequired}
                           </p>
                         </div>
                       </div>
-                      <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-chart-4" aria-hidden />
                     </div>
                   </div>
                 );
@@ -109,11 +110,11 @@ export function ConceptPrerequisites({ prerequisites, topicMasteryMap }: Concept
           </div>
         )}
 
-        {/* Explanation */}
-        <div className="p-3 rounded-lg bg-white/60 border border-current border-opacity-20 text-xs">
-          <p className="font-semibold mb-1">Why prerequisites matter:</p>
-          <p className="opacity-85">
-            Mastering foundational concepts before moving to advanced topics ensures true understanding and prevents careless mistakes. This structured approach follows the rigorous GRE preparation methodology.
+        <div className="surface-quiet rounded-lg p-3 text-xs text-muted-foreground">
+          <p className="mb-1 font-semibold text-foreground">Why prerequisites matter</p>
+          <p>
+            Solid foundations before advanced topics reduce repeated mistakes and match a structured quant
+            prep path.
           </p>
         </div>
       </CardContent>

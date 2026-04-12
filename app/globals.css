@@ -38,6 +38,19 @@
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: #5a4a5c;
   --sidebar-ring: #7a8d7e;
+
+  /* Top navigation bar (warm charcoal; single source for hex) */
+  --app-nav: #2e2629;
+  --app-nav-foreground: #f2ebe3;
+  --app-nav-muted: #b5a99a;
+  --app-nav-subtle: #a8988c;
+  --app-nav-hover: #3d3438;
+  --app-nav-active: #453a40;
+  --app-nav-active-foreground: #e8d9c8;
+  --app-nav-border: #5a6b5c;
+  --app-nav-mark: #4a5a4e;
+  --app-nav-pill: #3a3235;
+  --app-nav-pill-foreground: #c9bfb4;
 }
 
 .dark {
@@ -73,11 +86,24 @@
   --sidebar-accent-foreground: #1a1512;
   --sidebar-border: #4a3a3a;
   --sidebar-ring: #8a9d8e;
+
+  --app-nav: #2e2629;
+  --app-nav-foreground: #f2ebe3;
+  --app-nav-muted: #b5a99a;
+  --app-nav-subtle: #a8988c;
+  --app-nav-hover: #3d3438;
+  --app-nav-active: #453a40;
+  --app-nav-active-foreground: #e8d9c8;
+  --app-nav-border: #5a6b5c;
+  --app-nav-mark: #4a5a4e;
+  --app-nav-pill: #3a3235;
+  --app-nav-pill-foreground: #c9bfb4;
 }
 
 @theme inline {
-  --font-sans: 'Geist', 'Geist Fallback';
-  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-newsreader), ui-serif, Georgia, 'Times New Roman', serif;
+  --font-mono: ui-monospace, 'Geist Mono', monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -114,6 +140,17 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-app-nav: var(--app-nav);
+  --color-app-nav-foreground: var(--app-nav-foreground);
+  --color-app-nav-muted: var(--app-nav-muted);
+  --color-app-nav-subtle: var(--app-nav-subtle);
+  --color-app-nav-hover: var(--app-nav-hover);
+  --color-app-nav-active: var(--app-nav-active);
+  --color-app-nav-active-foreground: var(--app-nav-active-foreground);
+  --color-app-nav-border: var(--app-nav-border);
+  --color-app-nav-mark: var(--app-nav-mark);
+  --color-app-nav-pill: var(--app-nav-pill);
+  --color-app-nav-pill-foreground: var(--app-nav-pill-foreground);
 }
 
 @layer base {
@@ -121,6 +158,29 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: 'kern' 1, 'liga' 1;
+  }
+  h1,
+  h2,
+  .font-editorial {
+    font-family: var(--font-serif), ui-serif, Georgia, serif;
+    letter-spacing: -0.02em;
+  }
+}
+
+@layer utilities {
+  .surface-quiet {
+    @apply bg-muted/40 border border-border rounded-lg;
+  }
+  .transition-ui {
+    transition-duration: 180ms;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .transition-ui {
+    transition-duration: 0.01ms !important;
   }
 }

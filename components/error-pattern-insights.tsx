@@ -9,26 +9,33 @@ interface ErrorPatternInsightsProps {
   patterns: ErrorPatternAnalysis[];
 }
 
-const masteryGateLabels: Record<string, { label: string; description: string; color: string }> = {
+const masteryGateLabels: Record<
+  string,
+  { label: string; description: string; box: string; badge: string }
+> = {
   concept_unknown: {
-    label: 'Concept Gap',
-    description: 'You may not understand the core concept yet',
-    color: 'bg-red-50 border-red-200 text-red-700',
+    label: 'Concept gap',
+    description: 'You may not understand the core concept yet.',
+    box: 'border-destructive/35 bg-destructive/5',
+    badge: 'border-destructive/30 bg-destructive/10 text-destructive',
   },
   conceptual_error: {
-    label: 'Conceptual Error',
-    description: 'You understand the concept but apply it incorrectly',
-    color: 'bg-amber-50 border-amber-200 text-amber-700',
+    label: 'Conceptual error',
+    description: 'You understand the idea but applied it incorrectly.',
+    box: 'border-chart-4/40 bg-muted/40',
+    badge: 'border-border bg-muted text-foreground',
   },
   computational_error: {
-    label: 'Calculation Error',
-    description: 'The concept is solid, but arithmetic slipped',
-    color: 'bg-yellow-50 border-yellow-200 text-yellow-700',
+    label: 'Calculation error',
+    description: 'The concept is solid; arithmetic slipped.',
+    box: 'border-border bg-muted/30',
+    badge: 'border-border bg-secondary text-secondary-foreground',
   },
   careless_mistake: {
-    label: 'Careless Mistake',
-    description: 'You know this but rushed or missed a detail',
-    color: 'bg-blue-50 border-blue-200 text-blue-700',
+    label: 'Careless mistake',
+    description: 'You know this but rushed or missed a detail.',
+    box: 'border-primary/25 bg-muted/20',
+    badge: 'border-primary/30 bg-primary/10 text-primary',
   },
 };
 
@@ -38,51 +45,53 @@ export function ErrorPatternInsights({ patterns }: ErrorPatternInsightsProps) {
   }
 
   return (
-    <Card className="border-0 shadow-sm bg-gradient-to-br from-slate-50 to-blue-50">
+    <Card>
       <CardHeader>
-        <CardTitle className="text-base font-semibold text-slate-900 flex items-center gap-2">
-          <TrendingDown className="w-5 h-5 text-blue-600" />
-          Error Pattern Analysis
+        <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
+          <TrendingDown className="h-5 w-5 text-muted-foreground" aria-hidden />
+          Error pattern analysis
         </CardTitle>
-        <p className="text-xs text-slate-600 mt-1">Identifying recurring mistakes to strengthen weak areas</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Recurring mistakes surfaced so you can strengthen weak areas.
+        </p>
       </CardHeader>
       <CardContent className="space-y-4">
         {patterns.map((pattern, idx) => {
-          const gateInfo = masteryGateLabels[pattern.masteryGate];
+          const gateInfo = masteryGateLabels[pattern.masteryGate] ?? {
+            label: pattern.masteryGate,
+            description: '',
+            box: 'border-border bg-muted/30',
+            badge: 'border-border bg-muted',
+          };
 
           return (
-            <div
-              key={idx}
-              className={`p-4 rounded-lg border-2 ${gateInfo.color}`}
-            >
-              {/* Header */}
-              <div className="flex items-start justify-between gap-3 mb-3">
+            <div key={idx} className={`rounded-lg border-2 p-4 ${gateInfo.box}`}>
+              <div className="mb-3 flex items-start justify-between gap-3">
                 <div>
-                  <p className="font-semibold text-sm">{pattern.errorCategory.replace(/_/g, ' ')}</p>
-                  <p className="text-xs mt-0.5 opacity-75">{gateInfo.description}</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {pattern.errorCategory.replace(/_/g, ' ')}
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{gateInfo.description}</p>
                 </div>
-                <Badge className={`shrink-0 ${gateInfo.color}`}>
+                <Badge variant="outline" className={`shrink-0 ${gateInfo.badge}`}>
                   {gateInfo.label}
                 </Badge>
               </div>
 
-              {/* Occurrences and affected topics */}
-              <div className="space-y-2 text-sm">
+              <div className="space-y-2 text-sm text-foreground">
                 <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4" />
-                  <span className="font-medium">{pattern.totalOccurrences} occurrence{pattern.totalOccurrences !== 1 ? 's' : ''}</span>
+                  <AlertTriangle className="h-4 w-4 text-destructive" aria-hidden />
+                  <span className="font-medium">
+                    {pattern.totalOccurrences} occurrence{pattern.totalOccurrences !== 1 ? 's' : ''}
+                  </span>
                 </div>
 
                 {pattern.affectedSubtopics.length > 0 && (
                   <div>
-                    <p className="text-xs font-medium opacity-75 mb-1">Affected subtopics:</p>
+                    <p className="mb-1 text-xs font-medium text-muted-foreground">Affected subtopics</p>
                     <div className="flex flex-wrap gap-1">
-                      {pattern.affectedSubtopics.map(subtopic => (
-                        <Badge
-                          key={subtopic}
-                          variant="outline"
-                          className="text-xs"
-                        >
+                      {pattern.affectedSubtopics.map((subtopic) => (
+                        <Badge key={subtopic} variant="outline" className="text-xs">
                           {subtopic.replace(/_/g, ' ')}
                         </Badge>
                       ))}
@@ -92,12 +101,13 @@ export function ErrorPatternInsights({ patterns }: ErrorPatternInsightsProps) {
 
                 {pattern.commonTriggersAndTraps.length > 0 && (
                   <div>
-                    <p className="text-xs font-medium opacity-75 mb-1 flex items-center gap-1">
-                      <Zap className="w-3 h-3" /> Common triggers:
+                    <p className="mb-1 flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                      <Zap className="h-3 w-3" aria-hidden />
+                      Common triggers
                     </p>
-                    <ul className="text-xs space-y-0.5 opacity-90">
+                    <ul className="space-y-0.5 text-xs text-muted-foreground">
                       {pattern.commonTriggersAndTraps.map((trigger, i) => (
-                        <li key={i} className="list-disc list-inside">
+                        <li key={i} className="list-inside list-disc">
                           {trigger}
                         </li>
                       ))}
@@ -106,29 +116,29 @@ export function ErrorPatternInsights({ patterns }: ErrorPatternInsightsProps) {
                 )}
               </div>
 
-              {/* Recommendation based on gate */}
-              <div className="mt-3 pt-3 border-t border-current border-opacity-20 text-xs opacity-85">
+              <div className="mt-3 border-t border-border pt-3 text-xs text-muted-foreground">
                 {pattern.masteryGate === 'concept_unknown' && (
-                  '→ Go to Topic Mastery to get coach help on this concept'
+                  <span>Next: open Topic mastery and get coach help on this concept.</span>
                 )}
                 {pattern.masteryGate === 'conceptual_error' && (
-                  '→ Review the learning concepts in your error log entries'
+                  <span>Next: review the learning concepts in your error log entries.</span>
                 )}
                 {pattern.masteryGate === 'computational_error' && (
-                  '→ Practice similar problems with careful arithmetic'
+                  <span>Next: practice similar problems with careful arithmetic.</span>
                 )}
                 {pattern.masteryGate === 'careless_mistake' && (
-                  '→ Add a checklist step: "Did I check all details before answering?"'
+                  <span>Next: add a checklist step: did you verify every detail before answering?</span>
                 )}
               </div>
             </div>
           );
         })}
 
-        <div className="p-3 rounded-lg bg-white/40 border border-current border-opacity-20 text-xs">
-          <p className="font-semibold mb-1">How we identify patterns:</p>
-          <p className="opacity-75">
-            We analyze each error you log, categorize the type of mistake, and track which concepts are affected. This helps us spot systemic issues vs. one-off mistakes, so we can recommend the right recovery strategy.
+        <div className="surface-quiet rounded-lg p-3 text-xs text-muted-foreground">
+          <p className="mb-1 font-semibold text-foreground">How we identify patterns</p>
+          <p>
+            We categorize each logged error and track affected concepts to separate systemic issues from
+            one-offs, then suggest a recovery strategy.
           </p>
         </div>
       </CardContent>

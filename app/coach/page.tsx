@@ -1,17 +1,26 @@
 'use client';
 
-// Cache invalidation - v2 - cleaned orphaned JSX
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { PageShell } from '@/components/page-shell';
 import { mockCoachMessages } from '@/lib/mock-data';
 import { useState } from 'react';
-import { Send, Sparkles, CheckCircle2, BookOpen, Lightbulb } from 'lucide-react';
+import {
+  Send,
+  Sparkles,
+  CheckCircle2,
+  BookOpen,
+  Lightbulb,
+  ArrowRight,
+  Loader2,
+} from 'lucide-react';
 
 export default function CoachPage() {
-  const [messages, setMessages] = useState<Array<{ role: 'user' | 'coach'; content: string; protocolCompliant?: boolean }>>([]);
+  const [messages, setMessages] = useState<
+    Array<{ role: 'user' | 'coach'; content: string; protocolCompliant?: boolean }>
+  >([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -42,7 +51,7 @@ export default function CoachPage() {
       const text =
         data.content ||
         mockCoachMessages[0]?.coachResponse ||
-        'Sorry — no response. Try again in a moment.';
+        'No response. Try again in a moment.';
       setMessages((prev) => [
         ...prev,
         { role: 'coach', content: text, protocolCompliant: data.protocolCompliant ?? true },
@@ -70,69 +79,77 @@ export default function CoachPage() {
     { icon: CheckCircle2, label: 'Create practice', hint: 'Similar problems' },
   ];
 
+  const coachBullets = [
+    'Eight-step protocol for every quant explanation',
+    'Framed for official GRE and reputable prep sources',
+    'Aligned with a structured multi-month study arc',
+    'Calls out common traps and careless mistakes',
+  ];
+
   return (
-    <div className="min-h-screen bg-[#faf8f3]">
-      <div className="max-w-3xl mx-auto px-6 py-10">
-        
-        {/* Header */}
-        <div className="mb-10 pb-6 border-b border-slate-200">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-lg bg-[#7a8d7e]">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-            <h1 className="text-4xl font-light text-[#3d2f3f]">AI Study Coach</h1>
+    <PageShell narrow>
+      <header className="mb-10 border-b border-border pb-8">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          Coach
+        </p>
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-md border border-accent/40 bg-accent/15">
+            <Sparkles className="h-5 w-5 text-accent" aria-hidden />
           </div>
-          <p className="text-[#a89d94]">
-            Premium, rigorous explanations following a structured learning protocol
-          </p>
+          <div>
+            <h1 className="font-serif text-3xl font-normal tracking-tight text-foreground md:text-4xl">
+              Quant coach
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Structured explanations for GRE quantitative reasoning
+            </p>
+          </div>
         </div>
+      </header>
 
-        {/* Coach Credentials */}
-        <Card className="border-0 shadow-sm bg-gradient-to-r from-[#f5f1e8] to-[#f5f1e8] mb-8">
-          <CardContent className="pt-4">
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0">
-                <CheckCircle2 className="w-5 h-5 text-[#7a8d7e] mt-0.5" />
-              </div>
-              <div className="text-sm text-slate-700 space-y-1">
-                <p className="font-semibold text-[#3d2f3f]">How this coach helps</p>
-                <ul className="space-y-0.5 text-xs">
-                  <li>✓ Every explanation follows the 8-step rigorous protocol</li>
-                  <li>✓ Sourced to Manhattan Prep and Official GRE materials</li>
-                  <li>✓ Designed for the "I'm Overwhelmed" 120-day plan</li>
-                  <li>✓ Honors your learning level and flagging common traps</li>
-                </ul>
-              </div>
+      <Card className="mb-8 bg-secondary/40">
+        <CardContent className="pt-5">
+          <div className="flex gap-4">
+            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-accent" aria-hidden />
+            <div className="space-y-2 text-sm">
+              <p className="font-semibold text-foreground">How this coach helps</p>
+              <ul className="space-y-1.5 text-xs text-muted-foreground">
+                {coachBullets.map((line) => (
+                  <li key={line} className="flex gap-2">
+                    <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-accent/80" />
+                    {line}
+                  </li>
+                ))}
+              </ul>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* Chat Container */}
-        <Card className="border-0 shadow-lg bg-white h-[600px] flex flex-col mb-6">
-          {/* Messages Area */}
-          <CardContent className="flex-1 overflow-y-auto p-6 space-y-5">
+      <Card className="mb-6 flex h-[min(32rem,70vh)] flex-col sm:h-[36rem]">
+        <CardContent className="flex flex-1 flex-col overflow-hidden p-0">
+          <div className="flex-1 space-y-5 overflow-y-auto p-5 md:p-6">
             {messages.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-center">
-                <div className="p-3 rounded-full bg-[#7a8d7e] mb-4">
-                  <Sparkles className="w-8 h-8 text-white" />
+              <div className="flex h-full min-h-[240px] flex-col items-center justify-center px-2 text-center">
+                <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-full border border-accent/35 bg-accent/10">
+                  <Sparkles className="h-7 w-7 text-accent" aria-hidden />
                 </div>
-                <h2 className="text-xl font-semibold text-[#3d2f3f] mb-2">
-                  What concept would you like to master?
+                <h2 className="font-serif text-xl font-normal tracking-tight text-foreground">
+                  What do you want to clarify?
                 </h2>
-                <p className="text-[#a89d94] mb-8 max-w-sm text-sm leading-relaxed">
-                  Ask about any GRE concept, get help understanding your mistakes, or request targeted practice suggestions. Your coach will respond with rigorous, step-by-step explanations.
+                <p className="mb-8 mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
+                  Ask about a topic, a missed problem, or how to drill a weak area. Replies follow
+                  the same structure your study plan expects.
                 </p>
-                
-                {/* Suggested Prompts */}
-                <div className="space-y-2 w-full">
-                  {suggestedPrompts.map(prompt => (
+                <div className="w-full max-w-md space-y-2">
+                  {suggestedPrompts.map((prompt) => (
                     <Button
                       key={prompt}
                       variant="outline"
-                      className="w-full justify-start text-slate-700 hover:bg-slate-100 text-sm py-2 h-auto"
+                      className="h-auto w-full justify-start py-2.5 text-left text-sm font-normal"
                       onClick={() => setInput(prompt)}
                     >
-                      <span className="text-xs mr-2">→</span>
+                      <ArrowRight className="mr-2 h-3.5 w-3.5 shrink-0 opacity-50" />
                       {prompt}
                     </Button>
                   ))}
@@ -141,21 +158,28 @@ export default function CoachPage() {
             ) : (
               <>
                 {messages.map((msg, idx) => (
-                  <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div
+                    key={idx}
+                    className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
                     {msg.role === 'coach' && (
-                      <div className="flex gap-3 w-full max-w-2xl">
-                        <div className="flex-shrink-0 pt-1">
-                          <div className="p-2 rounded-full bg-[#7a8d7e]">
-                            <Sparkles className="w-4 h-4 text-white" />
-                          </div>
+                      <div className="flex w-full max-w-2xl gap-3">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-accent/30 bg-accent/10">
+                          <Sparkles className="h-4 w-4 text-accent" aria-hidden />
                         </div>
-                        <div className="flex-1">
-                          <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg">
-                            <p className="text-sm text-[#3d2f3f] whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                        <div className="min-w-0 flex-1">
+                          <div className="rounded-lg border border-border bg-muted/30 p-4">
+                            <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+                              {msg.content}
+                            </p>
                             {msg.protocolCompliant && (
-                              <div className="mt-3 pt-3 border-t border-slate-200">
-                                <Badge variant="outline" className="text-xs bg-[#f5f1e8] text-green-700 border-green-200">
-                                  ✓ Protocol-Compliant Explanation
+                              <div className="mt-3 border-t border-border pt-3">
+                                <Badge
+                                  variant="outline"
+                                  className="gap-1 border-accent/30 bg-accent/5 text-xs font-normal text-accent"
+                                >
+                                  <CheckCircle2 className="h-3 w-3" aria-hidden />
+                                  Protocol-aligned answer
                                 </Badge>
                               </div>
                             )}
@@ -164,9 +188,9 @@ export default function CoachPage() {
                       </div>
                     )}
                     {msg.role === 'user' && (
-                      <div className="max-w-2xl">
-                        <div className="bg-[#3d2f3f] text-white p-4 rounded-lg">
-                          <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                      <div className="max-w-[min(100%,28rem)]">
+                        <div className="rounded-lg bg-primary px-4 py-3 text-primary-foreground">
+                          <p className="whitespace-pre-wrap text-sm">{msg.content}</p>
                         </div>
                       </div>
                     )}
@@ -174,100 +198,97 @@ export default function CoachPage() {
                 ))}
                 {isLoading && (
                   <div className="flex justify-start">
-                    <div className="flex gap-3 w-full max-w-2xl">
-                      <div className="flex-shrink-0 pt-1">
-                        <div className="p-2 rounded-full bg-[#7a8d7e] animate-pulse">
-                          <Sparkles className="w-4 h-4 text-white" />
-                        </div>
+                    <div className="flex w-full max-w-2xl gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-accent/30 bg-accent/10">
+                        <Loader2 className="h-4 w-4 animate-spin text-accent" aria-hidden />
                       </div>
-                      <div className="flex-1">
-                        <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg">
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
-                            <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                            <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                            <span className="text-xs text-slate-500 ml-2">Coach is thinking...</span>
-                          </div>
-                        </div>
+                      <div className="flex flex-1 items-center gap-2 rounded-lg border border-border bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
+                        Coach is thinking…
                       </div>
                     </div>
                   </div>
                 )}
               </>
             )}
-          </CardContent>
+          </div>
 
-          {/* Follow-up Options */}
-          {messages.length > 0 && !isLoading && messages[messages.length - 1].role === 'coach' && (
-            <div className="border-t border-slate-200 p-4 bg-slate-50">
-              <p className="text-xs font-semibold text-[#a89d94] mb-2">What next?</p>
-              <div className="grid grid-cols-3 gap-2">
-                {followUpOptions.map(option => {
-                  const Icon = option.icon;
-                  return (
-                    <Button
-                      key={option.label}
-                      variant="outline"
-                      size="sm"
-                      className="text-xs h-auto py-2 flex flex-col items-center gap-1"
-                      onClick={() => setInput(`${option.label}`)}
-                    >
-                      <Icon className="w-4 h-4" />
-                      {option.label}
-                    </Button>
-                  );
-                })}
+          {messages.length > 0 &&
+            !isLoading &&
+            messages[messages.length - 1].role === 'coach' && (
+              <div className="border-t border-border bg-muted/20 px-4 py-3 md:px-6">
+                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  What next?
+                </p>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                  {followUpOptions.map((option) => {
+                    const Icon = option.icon;
+                    return (
+                      <Button
+                        key={option.label}
+                        variant="outline"
+                        size="sm"
+                        className="h-auto flex-col gap-1 py-2.5 text-xs font-normal"
+                        onClick={() => setInput(option.label)}
+                      >
+                        <Icon className="h-4 w-4" />
+                        {option.label}
+                      </Button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Input Area */}
-          <div className="border-t border-slate-200 p-4">
+          <div className="border-t border-border p-4 md:p-5">
             <div className="flex gap-2">
               <Input
-                placeholder="Ask your coach anything..."
+                placeholder="Ask your coach anything…"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                 disabled={isLoading}
                 className="text-sm"
               />
               <Button
                 onClick={handleSend}
                 disabled={isLoading || !input.trim()}
-                className="px-4 bg-[#3d2f3f] hover:bg-[#5a4a5c]"
+                size="icon"
+                className="shrink-0"
+                aria-label="Send message"
               >
-                <Send className="w-4 h-4" />
+                <Send className="h-4 w-4" />
               </Button>
             </div>
           </div>
-        </Card>
+        </CardContent>
+      </Card>
 
-        {/* Premium Features Card */}
-        <Card className="border-0 shadow-sm bg-gradient-to-br from-[#ede8df] to-[#ede8df]">
-          <CardHeader>
-            <CardTitle className="text-base font-semibold text-[#3d2f3f]">Coach Philosophy</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm text-slate-700">
-            <div className="space-y-2">
-              <p className="font-semibold text-[#3d2f3f]">Every explanation follows the 8-step rigorous protocol:</p>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="p-2 rounded bg-white border border-slate-200"><span className="font-semibold">1. Identify</span> the concept</div>
-                <div className="p-2 rounded bg-white border border-slate-200"><span className="font-semibold">2. Define</span> the rule</div>
-                <div className="p-2 rounded bg-white border border-slate-200"><span className="font-semibold">3. Show</span> steps</div>
-                <div className="p-2 rounded bg-white border border-slate-200"><span className="font-semibold">4. Compute</span> example</div>
-                <div className="p-2 rounded bg-white border border-slate-200"><span className="font-semibold">5. Check</span> answer</div>
-                <div className="p-2 rounded bg-white border border-slate-200"><span className="font-semibold">6. State</span> result</div>
-                <div className="p-2 rounded bg-white border border-slate-200"><span className="font-semibold">7. Extract</span> takeaway</div>
-                <div className="p-2 rounded bg-white border border-slate-200"><span className="font-semibold">8. Flag</span> traps</div>
+      <Card className="bg-secondary/30">
+        <CardHeader>
+          <CardTitle className="text-base font-semibold text-foreground">Eight-step protocol</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm text-muted-foreground">
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            {[
+              ['1. Identify', 'concept'],
+              ['2. Define', 'rule'],
+              ['3. Show', 'steps'],
+              ['4. Compute', 'example'],
+              ['5. Check', 'answer'],
+              ['6. State', 'result'],
+              ['7. Extract', 'takeaway'],
+              ['8. Flag', 'traps'],
+            ].map(([a, b]) => (
+              <div key={a} className="rounded-md border border-border bg-card px-2.5 py-2">
+                <span className="font-medium text-foreground">{a}</span> {b}
               </div>
-            </div>
-            <p className="text-xs text-[#a89d94] italic pt-2">
-              This protocol ensures deep understanding, not memorization. Every explanation is tied to materials and designed for retention under exam stress.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+            ))}
+          </div>
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            Built for retention under time pressure—not memorization alone.
+          </p>
+        </CardContent>
+      </Card>
+    </PageShell>
   );
 }

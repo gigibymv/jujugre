@@ -1,6 +1,7 @@
 'use client';
 
 import { useUserPlan } from '@/components/user-plan-provider';
+import { PageShell } from '@/components/page-shell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,7 +25,7 @@ export default function ModuleDetailPage() {
 
   if (!hydrated) {
     return (
-      <div className="min-h-screen bg-[#faf8f3] flex items-center justify-center text-[#a89d94] text-sm">
+      <div className="flex min-h-[calc(100dvh-4rem)] items-center justify-center bg-background text-sm text-muted-foreground">
         Loading…
       </div>
     );
@@ -32,12 +33,12 @@ export default function ModuleDetailPage() {
 
   if (!module) {
     return (
-      <div className="min-h-screen bg-[#faf8f3] px-6 py-10 max-w-2xl mx-auto">
-        <p className="text-[#3d2f3f] mb-4">Module not found.</p>
+      <PageShell narrow>
+        <p className="mb-4 text-foreground">Module not found.</p>
         <Button variant="outline" onClick={() => router.push('/study-plan')}>
           Back to study plan
         </Button>
-      </div>
+      </PageShell>
     );
   }
 
@@ -47,86 +48,84 @@ export default function ModuleDetailPage() {
   const isCurrent = studyPlan.currentModuleId === module.id;
 
   return (
-    <div className="min-h-screen bg-[#faf8f3]">
-      <div className="max-w-3xl mx-auto px-6 py-10">
-        <Link
-          href="/study-plan"
-          className="inline-flex items-center gap-2 text-sm text-[#a89d94] hover:text-[#3d2f3f] mb-6"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Study plan
-        </Link>
+    <PageShell narrow>
+      <Link
+        href="/study-plan"
+        className="mb-8 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors duration-150 ease-out hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Study plan
+      </Link>
 
-        <div className="mb-8">
-          <div className="flex flex-wrap items-center gap-2 mb-2">
-            <h1 className="text-3xl font-light text-[#3d2f3f]">
-              Week {module.weekNumber}: {module.title}
-            </h1>
-            {isCurrent && <Badge className="bg-[#3d2f3f] text-white">Current</Badge>}
-          </div>
-          <p className="text-[#a89d94]">{module.description}</p>
-          <div className="mt-4 space-y-2 max-w-md">
-            <div className="flex justify-between text-sm text-[#3d2f3f]">
-              <span>Module progress</span>
-              <span>{Math.round(pct)}%</span>
-            </div>
-            <Progress value={pct} className="h-2 bg-[#ede8df]" />
-          </div>
+      <header className="mb-8">
+        <div className="mb-2 flex flex-wrap items-center gap-2">
+          <h1 className="font-serif text-3xl font-normal tracking-tight text-foreground">
+            Week {module.weekNumber}: {module.title}
+          </h1>
+          {isCurrent && <Badge>Current</Badge>}
         </div>
+        <p className="text-muted-foreground">{module.description}</p>
+        <div className="mt-4 max-w-md space-y-2">
+          <div className="flex justify-between text-sm text-foreground">
+            <span>Module progress</span>
+            <span className="tabular-nums">{Math.round(pct)}%</span>
+          </div>
+          <Progress value={pct} className="h-2 bg-muted" />
+        </div>
+      </header>
 
-        <div className="space-y-6">
-          {module.parts.map((part) => (
-            <Card key={part.id} className="border-0 shadow-sm bg-white">
-              <CardHeader className="pb-2 border-b border-[#e8e3db]">
-                <CardTitle className="text-base font-semibold text-[#3d2f3f]">
-                  Part {part.partNumber}: {part.title}
-                </CardTitle>
-                <p className="text-xs text-[#a89d94]">
-                  ~{part.estimatedHours ?? 0} h · {part.tasks.length} tasks
-                </p>
-              </CardHeader>
-              <CardContent className="pt-4 space-y-3">
-                {part.tasks.map((task) => (
-                  <label
-                    key={task.id}
-                    className="flex items-start gap-3 p-3 rounded-lg border border-[#e8e3db] bg-[#faf8f3]/80 cursor-pointer hover:bg-[#f5f1e8] transition-colors"
-                  >
-                    <Checkbox
-                      checked={task.completed}
-                      onCheckedChange={(v) => setTaskCompleted(task.id, v === true)}
-                      className="mt-0.5"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        {task.completed ? (
-                          <CheckCircle2 className="w-4 h-4 text-[#7a8d7e] shrink-0" />
-                        ) : (
-                          <Circle className="w-4 h-4 text-[#d4ccc3] shrink-0" />
-                        )}
-                        <span className="font-medium text-sm text-[#3d2f3f]">{task.title}</span>
-                      </div>
-                      {task.description && (
-                        <p className="text-xs text-[#a89d94] mt-1 ml-6">{task.description}</p>
+      <div className="space-y-6">
+        {module.parts.map((part) => (
+          <Card key={part.id}>
+            <CardHeader className="border-b border-border pb-2">
+              <CardTitle className="text-base font-semibold text-foreground">
+                Part {part.partNumber}: {part.title}
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                ~{part.estimatedHours ?? 0} h · {part.tasks.length} tasks
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-3 pt-4">
+              {part.tasks.map((task) => (
+                <label
+                  key={task.id}
+                  className="surface-quiet flex cursor-pointer items-start gap-3 p-3 transition-colors duration-150 ease-out hover:bg-muted/50"
+                >
+                  <Checkbox
+                    checked={task.completed}
+                    onCheckedChange={(v) => setTaskCompleted(task.id, v === true)}
+                    className="mt-0.5"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      {task.completed ? (
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-accent" aria-hidden />
+                      ) : (
+                        <Circle className="h-4 w-4 shrink-0 text-muted-foreground/40" aria-hidden />
                       )}
-                      <p className="text-xs text-[#a89d94] mt-1 ml-6">
-                        ~{task.estimatedMinutes} min · {task.taskType}
-                      </p>
+                      <span className="text-sm font-medium text-foreground">{task.title}</span>
                     </div>
-                  </label>
-                ))}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        <div className="mt-10 flex gap-3">
-          <Link href="/" className="flex-1">
-            <Button variant="outline" className="w-full border-[#d4ccc3]">
-              Dashboard
-            </Button>
-          </Link>
-        </div>
+                    {task.description && (
+                      <p className="ml-6 mt-1 text-xs text-muted-foreground">{task.description}</p>
+                    )}
+                    <p className="ml-6 mt-1 text-xs text-muted-foreground">
+                      ~{task.estimatedMinutes} min · {task.taskType}
+                    </p>
+                  </div>
+                </label>
+              ))}
+            </CardContent>
+          </Card>
+        ))}
       </div>
-    </div>
+
+      <div className="mt-10">
+        <Link href="/">
+          <Button variant="outline" className="w-full sm:w-auto">
+            Dashboard
+          </Button>
+        </Link>
+      </div>
+    </PageShell>
   );
 }

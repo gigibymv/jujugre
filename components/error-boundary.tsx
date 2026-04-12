@@ -33,34 +33,31 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         this.props.fallback || (
-          <div className="min-h-screen bg-[#faf8f3] flex items-center justify-center p-4">
-            <Card className="w-full max-w-md border-0 shadow-lg">
-              <CardHeader className="border-b border-[#e8e3db]">
-                <CardTitle className="flex items-center gap-2 text-[#a88080]">
-                  <AlertCircle className="w-5 h-5" />
+          <div className="flex min-h-screen items-center justify-center bg-background p-4">
+            <Card className="w-full max-w-md">
+              <CardHeader className="border-b border-border">
+                <CardTitle className="flex items-center gap-2 text-destructive">
+                  <AlertCircle className="h-5 w-5" aria-hidden />
                   Something went wrong
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-4 space-y-4">
-                <p className="text-sm text-[#3d2f3f]">
-                  We encountered an unexpected error. Please try refreshing the page or contact support if the problem persists.
+              <CardContent className="space-y-4 pt-4">
+                <p className="text-sm text-foreground">
+                  We hit an unexpected error. Try refreshing the page, or go home if it keeps happening.
                 </p>
-                <div className="text-xs text-[#a89d94] font-mono bg-[#f5f1e8] p-2 rounded border border-[#e8e3db] overflow-auto max-h-32">
+                <div className="surface-quiet max-h-32 overflow-auto font-mono text-xs text-muted-foreground">
                   {this.state.error?.message || 'Unknown error'}
                 </div>
                 <div className="flex gap-2">
-                  <Button
-                    onClick={() => window.location.reload()}
-                    className="flex-1 bg-[#3d2f3f] hover:bg-[#5a4a5c] text-white"
-                  >
-                    Refresh Page
+                  <Button onClick={() => window.location.reload()} className="flex-1">
+                    Refresh page
                   </Button>
                   <Button
-                    onClick={() => window.location.href = '/'}
+                    onClick={() => (window.location.href = '/')}
                     variant="outline"
-                    className="flex-1 border-[#e8e3db] text-[#3d2f3f] hover:bg-[#ede8df]"
+                    className="flex-1"
                   >
-                    Go Home
+                    Go home
                   </Button>
                 </div>
               </CardContent>

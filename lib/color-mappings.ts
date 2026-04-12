@@ -1,77 +1,67 @@
 /**
- * Color Mapping Utilities
- * Maps quant data to visual colors for consistent, meaningful UI
+ * Color mapping utilities — Tailwind semantic tokens (aligned with app/globals.css).
  */
 
 export const colorMappings = {
-  // Mastery level to color
   masteryLevelColor: {
-    mastered: 'bg-[#7a8d7e] text-white', // Sage
-    proficient: 'bg-[#a89d94] text-white', // Warm grey
-    developing: 'bg-[#a88080] text-white', // Dusty rose
-    not_started: 'bg-[#d4ccc3] text-[#2a2520]', // Taupe
+    mastered: 'bg-chart-1 text-white',
+    proficient: 'bg-chart-4 text-white',
+    developing: 'bg-chart-2 text-white',
+    not_started: 'bg-chart-5 text-foreground',
   },
 
-  // Accuracy percentage to color
   accuracyColor: (percent: number) => {
-    if (percent >= 80) return 'text-[#7a8d7e]'; // Sage (high)
-    if (percent >= 70) return 'text-[#a89d94]'; // Warm grey (medium)
-    if (percent >= 60) return 'text-[#c9b5a0]'; // Warm tan (low)
-    return 'text-[#a88080]'; // Dusty rose (very low)
+    if (percent >= 80) return 'text-chart-1';
+    if (percent >= 70) return 'text-muted-foreground';
+    if (percent >= 60) return 'text-chart-3';
+    return 'text-chart-2';
   },
 
-  // Progress bar fill color
   progressBarColor: (percent: number) => {
-    if (percent >= 85) return 'bg-[#7a8d7e]'; // Sage
-    if (percent >= 70) return 'bg-[#a89d94]'; // Warm grey
-    return 'bg-[#a88080]'; // Dusty rose
+    if (percent >= 85) return 'bg-chart-1';
+    if (percent >= 70) return 'bg-muted-foreground';
+    return 'bg-chart-2';
   },
 
-  // Error category to badge color
   errorCategoryColor: {
-    conceptual_misunderstanding: 'bg-[#a88080] text-white', // Dusty rose
-    computational_error: 'bg-[#c9b5a0] text-[#2a2520]', // Warm tan
-    sign_error: 'bg-[#a88080] text-white', // Dusty rose
-    reading_comprehension: 'bg-[#8a7d74] text-white', // Warm grey
-    careless_mistake: 'bg-[#d4ccc3] text-[#2a2520]', // Taupe
+    conceptual_misunderstanding: 'bg-chart-2 text-white',
+    computational_error: 'bg-chart-3 text-foreground',
+    sign_error: 'bg-chart-2 text-white',
+    reading_comprehension: 'bg-chart-4 text-white',
+    careless_mistake: 'bg-chart-5 text-foreground',
   },
 
-  // Daily check-in emotion to color
   emotionColor: {
-    overwhelmed: 'text-[#a88080]', // Dusty rose
-    frustrated: 'text-[#c9b5a0]', // Warm tan
-    neutral: 'text-[#a89d94]', // Warm grey
-    confident: 'text-[#7a8d7e]', // Sage
+    overwhelmed: 'text-chart-2',
+    frustrated: 'text-chart-3',
+    neutral: 'text-muted-foreground',
+    confident: 'text-chart-1',
   },
 
-  // Study status to border color
   statusBorderColor: {
-    on_track: 'border-l-[#7a8d7e]', // Sage (left border for active)
-    behind: 'border-l-[#a88080]', // Dusty rose
-    recovering: 'border-l-[#c9b5a0]', // Warm tan
+    on_track: 'border-l-chart-1',
+    behind: 'border-l-chart-2',
+    recovering: 'border-l-chart-3',
   },
 };
 
-// Button style mappings
 export const buttonStyles = {
-  primary: 'bg-[#3d2f3f] hover:bg-[#5a4a5c] text-[#faf8f3]', // Plum
-  secondary: 'bg-[#ede8df] hover:bg-[#d4ccc3] text-[#3d2f3f]', // Sand
-  outlined: 'border border-[#d4ccc3] text-[#3d2f3f] hover:bg-[#f5f1e8]', // Taupe border
-  ghost: 'text-[#3d2f3f] hover:bg-[#f5f1e8]', // Plum text on hover bg
+  primary: 'bg-primary text-primary-foreground hover:bg-primary/90',
+  secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
+  outlined: 'border border-border text-foreground hover:bg-muted',
+  ghost: 'text-foreground hover:bg-muted',
 };
 
-// Card style mappings
 export const cardStyles = {
-  default: 'bg-white border border-[#e8e3db]', // Off-white bg, sand border
-  highlight: 'bg-[#f5f1e8] border-l-4 border-l-[#7a8d7e]', // Off-white with sage left border
-  subtle: 'bg-[#ede8df]', // Sand background
+  default: 'bg-card border border-border',
+  highlight: 'bg-secondary border-l-4 border-l-chart-1',
+  subtle: 'bg-muted',
 };
 
-// Text color mappings
 export const textColors = {
-  heading: 'text-[#3d2f3f]', // Plum
-  body: 'text-[#2a2520]', // Foreground
-  muted: 'text-[#a89d94]', // Warm grey
-  accent: 'text-[#7a8d7e]', // Sage
-  warning: 'text-[#a88080]', // Dusty rose
+  heading: 'text-foreground',
+  body: 'text-foreground',
+  muted: 'text-muted-foreground',
+  accent: 'text-accent',
+  warning: 'text-destructive',
 };

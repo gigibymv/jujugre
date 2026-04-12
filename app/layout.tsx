@@ -1,9 +1,14 @@
 import type { Metadata } from 'next'
-import { Geist } from 'next/font/google'
+import { Geist, Newsreader } from 'next/font/google'
 import './globals.css'
 import { AppProviders } from './providers'
 
-const geist = Geist({ subsets: ['latin'] })
+const geist = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
+const newsreader = Newsreader({
+  subsets: ['latin'],
+  variable: '--font-newsreader',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'Jujugre — GRE Tutor',
@@ -21,7 +26,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`font-sans antialiased ${geist.className}`}>
+      <body
+        className={`${geist.variable} ${newsreader.variable} font-sans antialiased`}
+      >
         <AppProviders>{children}</AppProviders>
       </body>
     </html>
