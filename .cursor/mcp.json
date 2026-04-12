@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "stitch": {
+      "command": "bash",
+      "args": [
+        "-c",
+        "if [ -f .env ]; then set -a && . ./.env && set +a; fi; if [ -f .env.local ]; then set -a && . ./.env.local && set +a; fi; exec npx -y @_davideast/stitch-mcp proxy"
+      ]
+    }
+  }
+}
