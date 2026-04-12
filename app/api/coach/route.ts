@@ -3,9 +3,19 @@ import { mockCoachMessages } from '@/lib/mock-data';
 
 type ChatMessage = { role: 'user' | 'assistant' | 'system'; content: string };
 
-const COACH_SYSTEM = `You are an expert GRE quantitative reasoning tutor. Always respond with rigorous, exam-relevant explanations. Prefer this structure when it fits: (1) concept (2) rule/formula (3) steps (4) computation (5) check (6) final answer (7) takeaway (8) common trap. Be concise but complete.`;
+const COACH_SYSTEM = `You are an expert GRE quantitative reasoning tutor. Always respond with rigorous, exam-relevant explanations. Prefer this structure when it fits: (1) concept (2) rule/formula (3) steps (4) computation (5) check (6) final answer (7) takeaway (8) common trap. Be concise but complete: default to roughly 400–900 words unless the user explicitly asks for a deeper or longer explanation.`;
 
 const NVIDIA_CHAT_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
+
+/** Vercel: allow slow GPU responses (Pro plan allows up to 60s; Hobby max is 10s). */
+export const maxDuration = 60;
+
+function stripThinkingBlocks(text: string): string {
+  return text
+    .replace(/<think>[\s\S]*?<\/think>/gi, '')
+    .replace(/<think>[\s\S]*/gi, '')
+    .trim();
+}
 
 function genericFallback(userText: string): string {
   return `Here is a structured walkthrough:
@@ -63,11 +73,11 @@ export async function POST(request: Request) {
     const nvidiaKey = process.env.NVIDIA_API_KEY?.trim();
     if (nvidiaKey) {
       const model = process.env.NVIDIA_MODEL || 'google/gemma-4-31b-it';
-      const maxTokens = Number(process.env.NVIDIA_MAX_TOKENS || '8192');
-      const temperature = Number(process.env.NVIDIA_TEMPERATURE || '0.7');
-      const topP = Number(process.env.NVIDIA_TOP_P || '0.95');
-      const enableThinking =
-        process.env.NVIDIA_ENABLE_THINKING !== 'false';
+      const maxTokens = Number(process.env.NVIDIA_MAX_TOKENS || '3072');
+      const temperature = Number(process.env.NVIDIA_TEMPERATURE || '0.55');
+      const topP = Number(process.env.NVIDIA_TOP_P || '0.92');
+      /** Thinking mode adds a long hidden reasoning phase → much slower. Off unless NVIDIA_ENABLE_THINKING=true */
+      const enableThinking = process.env.NVIDIA_ENABLE_THINKING === 'true';
 
       const res = await fetch(NVIDIA_CHAT_URL, {
         method: 'POST',
@@ -79,9 +89,9 @@ export async function POST(request: Request) {
         body: JSON.stringify({
           model,
           messages: apiMessages,
-          max_tokens: Number.isFinite(maxTokens) ? maxTokens : 8192,
-          temperature: Number.isFinite(temperature) ? temperature : 0.7,
-          top_p: Number.isFinite(topP) ? topP : 0.95,
+          max_tokens: Number.isFinite(maxTokens) ? maxTokens : 3072,
+          temperature: Number.isFinite(temperature) ? temperature : 0.55,
+          top_p: Number.isFinite(topP) ? topP : 0.92,
           stream: false,
           ...(enableThinking && {
             chat_template_kwargs: { enable_thinking: true },
@@ -99,7 +109,10 @@ export async function POST(request: Request) {
       const data = (await res.json()) as {
         choices?: Array<{ message?: { content?: string | null } }>;
       };
-      const content = data.choices?.[0]?.message?.content?.trim();
+      let content = data.choices?.[0]?.message?.content?.trim();
+      if (content) {
+        content = stripThinkingBlocks(content);
+      }
       if (!content) {
         const fb = fallbackReply(userText);
         return NextResponse.json(fb);
