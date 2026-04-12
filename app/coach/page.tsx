@@ -39,7 +39,8 @@ export default function CoachPage() {
     setIsLoading(true);
     setStreamBuffer(null);
 
-    const preferStream = process.env.NEXT_PUBLIC_COACH_USE_STREAM !== 'false';
+    /** Default off: single JSON response is more reliable on Vercel than NDJSON streaming. */
+    const preferStream = process.env.NEXT_PUBLIC_COACH_USE_STREAM === 'true';
 
     try {
       const apiMessages = nextThread.map((m) => ({
@@ -47,12 +48,31 @@ export default function CoachPage() {
         content: m.content,
       }));
 
-      const res = await fetch('/api/coach', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: apiMessages, stream: preferStream }),
-        cache: 'no-store',
-      });
+      let res: Response;
+      try {
+        res = await fetch('/api/coach', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: apiMessages, stream: preferStream }),
+          cache: 'no-store',
+          signal: AbortSignal.timeout(55_000),
+        });
+      } catch (fetchErr) {
+        const name = fetchErr instanceof Error ? fetchErr.name : '';
+        if (name === 'TimeoutError' || name === 'AbortError') {
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: 'coach',
+              content:
+                'The request took too long (network or server timeout). Try a shorter question, or try again in a moment.',
+              protocolCompliant: true,
+            },
+          ]);
+          return;
+        }
+        throw fetchErr;
+      }
 
       const ct = (res.headers.get('content-type') || '').toLowerCase();
 

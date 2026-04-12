@@ -19,14 +19,15 @@
 
 | Name | Value | Environnements |
 |------|--------|----------------|
-| `NVIDIA_API_KEY` | ta clé `nvapi-...` | Production, Preview |
+| `OPENROUTER_API_KEY` | clé [openrouter.ai/keys](https://openrouter.ai/keys) | Production, Preview |
+| `NVIDIA_API_KEY` | (optionnel) ta clé `nvapi-...` | Production, Preview |
 | `NVIDIA_MODEL` | `google/gemma-4-31b-it` | (optionnel) |
 | `NVIDIA_MAX_TOKENS` | `3072` | (optionnel, limite la longueur = moins lent) |
 | `NVIDIA_ENABLE_THINKING` | laisser **vide** ou `false` | `true` = réponses plus lentes (phase de raisonnement) |
 
 Optionnel : `OPENAI_API_KEY` si tu veux un repli OpenAI sans NVIDIA.
 
-**Latence coach :** Gemma 31B via NVIDIA peut prendre **10–40 s**. Sur Vercel **Hobby**, la fonction coupe à **10 s** : si tu vois des timeouts, passe en **Pro** (jusqu’à **60 s** avec `maxDuration` dans la route) ou choisis un modèle plus petit sur le catalogue NVIDIA.
+**Latence coach :** Gemma 31B via NVIDIA peut prendre **10–40 s**. Sur Vercel **Hobby**, la fonction coupe à **10 s**. L’app **coupe l’appel amont** vers ~8,2 s (`COACH_UPSTREAM_TIMEOUT_MS`) et renvoie un **texte de secours** structuré plutôt qu’une erreur vide. Pour des vraies réponses LLM longues : **Vercel Pro** (jusqu’à **60 s** avec `maxDuration`) ou **modèle / `NVIDIA_MAX_TOKENS` plus petits**. Sur Vercel, le coach utilise le **JSON** côté client par défaut (pas le streaming) pour plus de fiabilité ; le streaming amont SSE est désactivé sauf `COACH_VERCEL_ALLOW_UPSTREAM_SSE=true`.
 
 7. Clique **Deploy**. À la fin, ouvre l’URL `*.vercel.app` : teste **Coach** et l’onboarding.
 

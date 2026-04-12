@@ -72,17 +72,35 @@ test.describe('Coach UI', () => {
           await route.continue();
           return;
         }
+        let wantStream = false;
+        try {
+          const data = route.request().postDataJSON() as { stream?: boolean } | null;
+          wantStream = data?.stream === true;
+        } catch {
+          /* ignore */
+        }
+        if (wantStream) {
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/x-ndjson; charset=utf-8',
+            body:
+              '{"c":"E2E mock coach reply."}\n{"done":true,"protocolCompliant":true}\n',
+          });
+          return;
+        }
         await route.fulfill({
           status: 200,
-          contentType: 'application/x-ndjson; charset=utf-8',
-          body:
-            '{"c":"E2E mock coach reply."}\n{"done":true,"protocolCompliant":true}\n',
+          contentType: 'application/json; charset=utf-8',
+          body: JSON.stringify({
+            content: 'E2E mock coach reply.',
+            protocolCompliant: true,
+          }),
         });
       }
     );
   });
 
-  test('send message shows mocked streamed reply', async ({ page }) => {
+  test('send message shows mocked coach reply', async ({ page }) => {
     await page.goto('/coach');
     await page.getByPlaceholder(/Ask your coach/i).fill('E2E smoke question');
     await page.getByRole('button', { name: /Send message/i }).click();

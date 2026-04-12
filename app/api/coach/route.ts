@@ -14,11 +14,47 @@ const COACH_SYSTEM = verboseCoach
 
 const NVIDIA_CHAT_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
 
+/** OpenRouter (OpenAI-compatible). Free tier models tried in order. */
+const OPENROUTER_CHAT_URL = 'https://openrouter.ai/api/v1/chat/completions';
+
+const OPENROUTER_FREE_MODEL_CHAIN = [
+  'google/gemma-4-31b-it:free',
+  'openai/gpt-oss-120b:free',
+  'nvidia/nemotron-3-nano-30b-a3b:free',
+] as const;
+
 /** Vercel: allow slow GPU responses (Pro plan allows up to 60s; Hobby max is 10s). */
 export const maxDuration = 60;
 
 /** Node required for upstream fetch streaming + long-running completions. */
 export const runtime = 'nodejs';
+
+export const dynamic = 'force-dynamic';
+
+/** Abort upstream LLM if still running (Hobby ~10s wall clock; leave margin for JSON work). */
+function upstreamAbortSignal(): AbortSignal | undefined {
+  const raw = process.env.COACH_UPSTREAM_TIMEOUT_MS;
+  const ms = Math.min(
+    Math.max(Number(raw || '8200'), 4000),
+    115_000
+  );
+  try {
+    return AbortSignal.timeout(ms);
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * OpenAI/NVIDIA SSE through serverless is fragile on Vercel (Hobby timeouts, buffering).
+ * Default: on Vercel, call upstream with stream:false, then optionally wrap as NDJSON for the client.
+ * Opt-in: COACH_VERCEL_ALLOW_UPSTREAM_SSE=true
+ */
+function useUpstreamSse(wantClientStream: boolean): boolean {
+  if (!wantClientStream) return false;
+  if (process.env.VERCEL !== '1') return true;
+  return process.env.COACH_VERCEL_ALLOW_UPSTREAM_SSE === 'true';
+}
 
 function stripThinkingBlocks(text: string): string {
   return text
@@ -88,6 +124,38 @@ function ndjsonFromFallback(fb: { content: string; protocolCompliant: boolean })
   });
 }
 
+function parseChatCompletionJson(data: unknown): { content: string | null; apiError?: string } {
+  const d = data as {
+    error?: { message?: string };
+    choices?: Array<{ message?: { content?: string | null } }>;
+  };
+  if (d?.error?.message) {
+    return { content: null, apiError: d.error.message };
+  }
+  const c = d?.choices?.[0]?.message?.content?.trim();
+  return { content: c || null };
+}
+
+function coachJsonOrNdjson(
+  rawContent: string,
+  wantStream: boolean,
+  upstreamStream: boolean
+): Response | NextResponse {
+  let content = stripThinkingBlocks(rawContent.trim());
+  if (!content) content = rawContent.trim();
+  if (!content) {
+    const fb = fallbackReply('');
+    if (wantStream) return ndjsonResponse(ndjsonFromFallback(fb));
+    return NextResponse.json(fb);
+  }
+  if (wantStream && !upstreamStream) {
+    return ndjsonResponse(
+      ndjsonFromFallback({ content, protocolCompliant: true })
+    );
+  }
+  return NextResponse.json({ content, protocolCompliant: true });
+}
+
 function buildNdjsonStream(upstreamBody: ReadableStream<Uint8Array> | null): ReadableStream<Uint8Array> {
   const enc = new TextEncoder();
   return new ReadableStream({
@@ -140,6 +208,90 @@ export async function POST(request: Request) {
     ];
 
     const defaultMax = verboseCoach ? 3072 : 1024;
+    const upstreamStream = useUpstreamSse(wantStream);
+    const upstreamSignal = upstreamAbortSignal();
+
+    const openRouterKey = process.env.OPENROUTER_API_KEY?.trim();
+    if (openRouterKey) {
+      const orMax = Number(
+        process.env.OPENROUTER_MAX_TOKENS || String(Math.min(defaultMax, 1024))
+      );
+      const maxTokens = Number.isFinite(orMax) && orMax > 0 ? orMax : Math.min(defaultMax, 1024);
+      const referer =
+        process.env.OPENROUTER_HTTP_REFERER?.trim() ||
+        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+      const title = process.env.OPENROUTER_APP_TITLE?.trim() || 'Jujugre';
+
+      const chain =
+        process.env.OPENROUTER_MODEL_CHAIN?.split(',')
+          .map((m) => m.trim())
+          .filter(Boolean) ?? [...OPENROUTER_FREE_MODEL_CHAIN];
+
+      for (const model of chain) {
+        let res: Response;
+        try {
+          res = await fetch(OPENROUTER_CHAT_URL, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${openRouterKey}`,
+              'Content-Type': 'application/json',
+              Accept: upstreamStream ? 'text/event-stream' : 'application/json',
+              'HTTP-Referer': referer,
+              'X-Title': title,
+            },
+            body: JSON.stringify({
+              model,
+              messages: apiMessages,
+              temperature: 0.4,
+              max_tokens: maxTokens,
+              stream: upstreamStream,
+            }),
+            ...(upstreamSignal ? { signal: upstreamSignal } : {}),
+          });
+        } catch (e) {
+          const name = e instanceof Error ? e.name : '';
+          if (name === 'TimeoutError' || name === 'AbortError') {
+            console.warn(`[jujugre] OpenRouter ${model} aborted:`, e);
+          } else {
+            console.warn(`[jujugre] OpenRouter ${model} fetch error:`, e);
+          }
+          continue;
+        }
+
+        if (!res.ok) {
+          const errText = await res.text();
+          console.warn(`[jujugre] OpenRouter ${model} HTTP ${res.status}:`, errText.slice(0, 500));
+          continue;
+        }
+
+        if (upstreamStream && res.body) {
+          return ndjsonResponse(buildNdjsonStream(res.body));
+        }
+
+        let data: unknown;
+        try {
+          data = await res.json();
+        } catch {
+          console.warn(`[jujugre] OpenRouter ${model}: invalid JSON body`);
+          continue;
+        }
+
+        const { content, apiError } = parseChatCompletionJson(data);
+        if (apiError) {
+          console.warn(`[jujugre] OpenRouter ${model} API error:`, apiError);
+          continue;
+        }
+        if (!content) {
+          console.warn(`[jujugre] OpenRouter ${model}: empty content`);
+          continue;
+        }
+
+        return coachJsonOrNdjson(content, wantStream, upstreamStream);
+      }
+
+      console.warn('[jujugre] OpenRouter: all models in chain failed, falling back to NVIDIA/OpenAI/mock');
+    }
+
     const nvidiaKey = process.env.NVIDIA_API_KEY?.trim();
     if (nvidiaKey) {
       const model = process.env.NVIDIA_MODEL || 'google/gemma-4-31b-it';
@@ -154,21 +306,35 @@ export async function POST(request: Request) {
         max_tokens: Number.isFinite(maxTokens) ? maxTokens : defaultMax,
         temperature: Number.isFinite(temperature) ? temperature : 0.55,
         top_p: Number.isFinite(topP) ? topP : 0.92,
-        stream: wantStream,
+        stream: upstreamStream,
         ...(enableThinking && {
           chat_template_kwargs: { enable_thinking: true },
         }),
       };
 
-      const res = await fetch(NVIDIA_CHAT_URL, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${nvidiaKey}`,
-          'Content-Type': 'application/json',
-          Accept: wantStream ? 'text/event-stream' : 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
+      let res: Response;
+      try {
+        res = await fetch(NVIDIA_CHAT_URL, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${nvidiaKey}`,
+            'Content-Type': 'application/json',
+            Accept: upstreamStream ? 'text/event-stream' : 'application/json',
+          },
+          body: JSON.stringify(payload),
+          ...(upstreamSignal ? { signal: upstreamSignal } : {}),
+        });
+      } catch (e) {
+        const name = e instanceof Error ? e.name : '';
+        if (name === 'TimeoutError' || name === 'AbortError') {
+          console.warn('[jujugre] NVIDIA fetch aborted (timeout):', e);
+        } else {
+          console.error('[jujugre] NVIDIA fetch error:', e);
+        }
+        const fb = fallbackReply(userText);
+        if (wantStream) return ndjsonResponse(ndjsonFromFallback(fb));
+        return NextResponse.json(fb);
+      }
 
       if (!res.ok) {
         const errText = await res.text();
@@ -180,7 +346,7 @@ export async function POST(request: Request) {
         return NextResponse.json(fb);
       }
 
-      if (wantStream && res.body) {
+      if (upstreamStream && res.body) {
         return ndjsonResponse(buildNdjsonStream(res.body));
       }
 
@@ -193,10 +359,11 @@ export async function POST(request: Request) {
       }
       if (!content) {
         const fb = fallbackReply(userText);
+        if (wantStream) return ndjsonResponse(ndjsonFromFallback(fb));
         return NextResponse.json(fb);
       }
 
-      return NextResponse.json({ content, protocolCompliant: true });
+      return coachJsonOrNdjson(content, wantStream, upstreamStream);
     }
 
     const openaiKey = process.env.OPENAI_API_KEY;
@@ -211,21 +378,35 @@ export async function POST(request: Request) {
     const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
     const openaiMax = Number(process.env.OPENAI_MAX_TOKENS || String(verboseCoach ? 4096 : 900));
 
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${openaiKey}`,
-        'Content-Type': 'application/json',
-        Accept: wantStream ? 'text/event-stream' : 'application/json',
-      },
-      body: JSON.stringify({
-        model,
-        messages: apiMessages,
-        temperature: 0.4,
-        stream: wantStream,
-        ...(Number.isFinite(openaiMax) && openaiMax > 0 && { max_tokens: openaiMax }),
-      }),
-    });
+    let res: Response;
+    try {
+      res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${openaiKey}`,
+          'Content-Type': 'application/json',
+          Accept: upstreamStream ? 'text/event-stream' : 'application/json',
+        },
+        body: JSON.stringify({
+          model,
+          messages: apiMessages,
+          temperature: 0.4,
+          stream: upstreamStream,
+          ...(Number.isFinite(openaiMax) && openaiMax > 0 && { max_tokens: openaiMax }),
+        }),
+        ...(upstreamSignal ? { signal: upstreamSignal } : {}),
+      });
+    } catch (e) {
+      const name = e instanceof Error ? e.name : '';
+      if (name === 'TimeoutError' || name === 'AbortError') {
+        console.warn('[jujugre] OpenAI fetch aborted (timeout):', e);
+      } else {
+        console.error('[jujugre] OpenAI fetch error:', e);
+      }
+      const fb = fallbackReply(userText);
+      if (wantStream) return ndjsonResponse(ndjsonFromFallback(fb));
+      return NextResponse.json(fb);
+    }
 
     if (!res.ok) {
       const errText = await res.text();
@@ -237,7 +418,7 @@ export async function POST(request: Request) {
       return NextResponse.json(fb);
     }
 
-    if (wantStream && res.body) {
+    if (upstreamStream && res.body) {
       return ndjsonResponse(buildNdjsonStream(res.body));
     }
 
@@ -247,10 +428,11 @@ export async function POST(request: Request) {
     const content = data.choices?.[0]?.message?.content?.trim();
     if (!content) {
       const fb = fallbackReply(userText);
+      if (wantStream) return ndjsonResponse(ndjsonFromFallback(fb));
       return NextResponse.json(fb);
     }
 
-    return NextResponse.json({ content, protocolCompliant: true });
+    return coachJsonOrNdjson(content, wantStream, upstreamStream);
   } catch (e) {
     console.error('[jujugre] coach API:', e);
     const fb = fallbackReply('');
