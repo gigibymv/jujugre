@@ -1,13 +1,8 @@
 import type { Metadata } from 'next'
-import { Lexend, Newsreader } from 'next/font/google'
+import { Newsreader } from 'next/font/google'
 import './globals.css'
 import { AppProviders } from './providers'
 
-const lexend = Lexend({
-  subsets: ['latin'],
-  variable: '--font-lexend',
-  display: 'swap',
-})
 const newsreader = Newsreader({
   subsets: ['latin'],
   variable: '--font-newsreader',
@@ -31,7 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${lexend.variable} ${newsreader.variable} font-sans antialiased`}
+        className={`${newsreader.variable} font-sans antialiased`}
       >
         <AppProviders>{children}</AppProviders>
       </body>

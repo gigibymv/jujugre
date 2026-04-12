@@ -113,7 +113,7 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-lexend), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Helvetica Neue', Helvetica, Arial, ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-newsreader), ui-serif, Georgia, 'Times New Roman', serif;
   /** Reserved for code / stack traces only — prefer font-sans + tabular-nums for numbers */
   --font-mono: ui-monospace, monospace;
@@ -179,7 +179,7 @@
   }
   /**
    * Serif (Newsreader) only on top-level page titles.
-   * Section headings (h2–h6) stay Lexend unless you add `font-serif` or `font-display`.
+   * Section headings (h2–h6) stay Helvetica stack unless you add `font-serif` or `font-display`.
    */
   h1,
   .font-editorial,
@@ -195,7 +195,7 @@
     @apply rounded-lg border border-transparent bg-secondary/45 ring-1 ring-border/35;
   }
 
-  /** Numbers & stats: always Lexend + tabular figures (single sans voice) */
+  /** Numbers & stats: always UI sans (Helvetica stack) + tabular figures */
   .text-stat {
     @apply font-sans text-2xl font-medium tabular-nums tracking-tight text-foreground;
   }
