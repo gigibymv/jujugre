@@ -23,6 +23,8 @@ export default function CoachPage() {
   >([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  /** In-flight streamed coach text (null = not streaming) */
+  const [streamBuffer, setStreamBuffer] = useState<string | null>(null);
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -32,6 +34,7 @@ export default function CoachPage() {
     setMessages(nextThread);
     setInput('');
     setIsLoading(true);
+    setStreamBuffer(null);
 
     try {
       const apiMessages = nextThread.map((m) => ({
@@ -42,8 +45,68 @@ export default function CoachPage() {
       const res = await fetch('/api/coach', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: apiMessages }),
+        body: JSON.stringify({ messages: apiMessages, stream: true }),
       });
+
+      const ct = res.headers.get('content-type') || '';
+
+      if (ct.includes('ndjson') && res.body) {
+        setStreamBuffer('');
+        const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+        let buf = '';
+        let full = '';
+        let protocolCompliant = true;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += value;
+          const lines = buf.split('\n');
+          buf = lines.pop() ?? '';
+          for (const line of lines) {
+            const t = line.trim();
+            if (!t) continue;
+            try {
+              const o = JSON.parse(t) as {
+                c?: string;
+                replace?: string;
+                done?: boolean;
+                protocolCompliant?: boolean;
+                error?: string;
+              };
+              if (o.error) throw new Error(o.error);
+              if (typeof o.replace === 'string') {
+                full = o.replace;
+                setStreamBuffer(full);
+              }
+              if (typeof o.c === 'string') {
+                full += o.c;
+                setStreamBuffer(full);
+              }
+              if (o.done) {
+                if (typeof o.protocolCompliant === 'boolean') {
+                  protocolCompliant = o.protocolCompliant;
+                }
+              }
+            } catch (e) {
+              if (e instanceof SyntaxError) continue;
+              throw e;
+            }
+          }
+        }
+
+        const text =
+          full.trim() ||
+          mockCoachMessages[0]?.coachResponse ||
+          'No response. Try again in a moment.';
+        setMessages((prev) => [
+          ...prev,
+          { role: 'coach', content: text, protocolCompliant },
+        ]);
+        setStreamBuffer(null);
+        return;
+      }
+
+      setStreamBuffer(null);
       const data = (await res.json()) as {
         content?: string;
         protocolCompliant?: boolean;
@@ -56,11 +119,13 @@ export default function CoachPage() {
         ...prev,
         { role: 'coach', content: text, protocolCompliant: data.protocolCompliant ?? true },
       ]);
+      setStreamBuffer(null);
     } catch {
       const fallback =
         mockCoachMessages[0]?.coachResponse ||
         'Network error. Check your connection and try again.';
       setMessages((prev) => [...prev, { role: 'coach', content: fallback, protocolCompliant: true }]);
+      setStreamBuffer(null);
     } finally {
       setIsLoading(false);
     }
@@ -194,14 +259,37 @@ export default function CoachPage() {
                     )}
                   </div>
                 ))}
-                {isLoading && (
+                {isLoading && streamBuffer === null && (
                   <div className="flex justify-start">
                     <div className="flex w-full max-w-2xl gap-3">
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-accent/30 bg-accent/10">
                         <Loader2 className="h-4 w-4 animate-spin text-accent" aria-hidden />
                       </div>
                       <div className="flex flex-1 items-center gap-2 rounded-lg border border-border bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
-                        Coach is thinking…
+                        Connecting…
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {streamBuffer !== null && (
+                  <div className="flex justify-start">
+                    <div className="flex w-full max-w-2xl gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-accent/30 bg-accent/10">
+                        {isLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-accent" aria-hidden />
+                        ) : (
+                          <Sparkles className="h-4 w-4 text-accent" aria-hidden />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="rounded-lg border border-border bg-muted/30 p-4">
+                          <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+                            {streamBuffer || '…'}
+                          </p>
+                          {isLoading && (
+                            <p className="mt-2 text-xs text-muted-foreground">Streaming answer…</p>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
