@@ -86,7 +86,10 @@ export default function Dashboard() {
       <header className="mb-page-section border-b border-border pb-8">
         <p className="page-eyebrow mb-2">Dashboard</p>
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-          <blockquote className="max-w-2xl font-serif text-xl font-normal leading-snug tracking-tight text-foreground md:text-2xl">
+          <blockquote
+            className="max-w-2xl font-serif text-xl font-normal leading-snug tracking-tight text-foreground md:text-2xl"
+            aria-label="Daily encouragement"
+          >
             <span className="text-muted-foreground">&ldquo;</span>
             {dailyQuote}
             <span className="text-muted-foreground">&rdquo;</span>

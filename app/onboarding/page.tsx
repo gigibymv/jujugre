@@ -38,17 +38,22 @@ export default function OnboardingPage() {
     <div className="flex min-h-[calc(100dvh-4rem)] items-center justify-center bg-muted px-4 py-10">
       <div className="w-full max-w-2xl">
         <div className="mb-8">
-          <div className="mb-4 flex gap-2">
+          <div
+            className="mb-4 flex gap-2"
+            role="group"
+            aria-label="Onboarding progress"
+          >
             {[1, 2, 3, 4].map((s) => (
               <div
                 key={s}
                 className={`h-2 flex-1 rounded-full transition-colors duration-150 ease-out ${
                   s <= step ? 'bg-primary' : 'bg-muted'
                 }`}
+                aria-current={s === step ? 'step' : undefined}
               />
             ))}
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground" aria-live="polite">
             Step {step} of 4
           </p>
         </div>

@@ -48,6 +48,7 @@ export default function AppNav() {
 
   return (
     <nav
+      aria-label="Primary"
       className={cn(
         'sticky top-0 z-50 border-b border-primary-foreground/12 bg-primary text-primary-foreground shadow-[0_1px_0_rgba(0,0,0,0.08)]'
       )}
@@ -71,19 +72,19 @@ export default function AppNav() {
             const Icon = item.icon;
             const active = isActive(item.href);
             return (
-              <Link key={item.href} href={item.href}>
-                <button
-                  type="button"
-                  className={cn(
-                    'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150 ease-out',
-                    active
-                      ? 'bg-accent/35 text-primary-foreground'
-                      : 'text-primary-foreground/72 hover:bg-primary-foreground/10 hover:text-primary-foreground'
-                  )}
-                >
-                  <Icon className="h-4 w-4 shrink-0 opacity-95" />
-                  <span className="hidden lg:inline">{item.label}</span>
-                </button>
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={active ? 'page' : undefined}
+                className={cn(
+                  'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150 ease-out',
+                  active
+                    ? 'bg-accent/35 text-primary-foreground'
+                    : 'text-primary-foreground/72 hover:bg-primary-foreground/10 hover:text-primary-foreground'
+                )}
+              >
+                <Icon className="h-4 w-4 shrink-0 opacity-95" aria-hidden />
+                <span className="hidden lg:inline">{item.label}</span>
               </Link>
             );
           })}
@@ -138,6 +139,7 @@ export default function AppNav() {
                     <Link
                       key={item.href}
                       href={item.href}
+                      aria-current={active ? 'page' : undefined}
                       onClick={() => setMobileOpen(false)}
                       className={cn(
                         'flex items-center gap-3 rounded-md px-3 py-3 text-sm font-medium transition-colors duration-150 ease-out',
@@ -146,7 +148,7 @@ export default function AppNav() {
                           : 'text-primary-foreground/72 hover:bg-primary-foreground/10'
                       )}
                     >
-                      <Icon className="h-4 w-4" />
+                      <Icon className="h-4 w-4" aria-hidden />
                       {item.label}
                     </Link>
                   );

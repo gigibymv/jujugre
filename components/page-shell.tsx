@@ -30,7 +30,8 @@ export function PageShell({
       >
         <div
           className={cn(
-            'rounded-2xl border border-border/90 bg-background shadow-sm',
+            'rounded-2xl border border-border/90 bg-background',
+            'shadow-[0_12px_32px_-8px_rgba(42,37,32,0.06)]',
             'ring-1 ring-foreground/[0.06]',
             'px-5 py-8 md:px-8 md:py-10'
           )}
