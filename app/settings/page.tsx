@@ -7,12 +7,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageShell } from '@/components/page-shell';
 import { useUserPlan } from '@/components/user-plan-provider';
-import { Lock, Bell, BookOpen, Calendar } from 'lucide-react';
+import { Lock, Bell, BookOpen, Calendar, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function SettingsPage() {
-  const { user, studyPlan: plan, resetLocalState, hasCompletedOnboarding } = useUserPlan();
+  const router = useRouter();
+  const { user, studyPlan: plan, resetLocalState } = useUserPlan();
   const [notifications, setNotifications] = useState(true);
   const [emailUpdates, setEmailUpdates] = useState(true);
 
@@ -63,20 +65,6 @@ export default function SettingsPage() {
             <Button variant="outline" className="w-full" asChild>
               <Link href="/onboarding">Update plan and dates</Link>
             </Button>
-            {hasCompletedOnboarding && (
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full border-destructive/30 text-destructive hover:bg-destructive/5"
-                onClick={() => {
-                  if (typeof window !== 'undefined' && window.confirm('Clear saved progress on this device?')) {
-                    resetLocalState();
-                  }
-                }}
-              >
-                Reset local data
-              </Button>
-            )}
           </div>
         </CardContent>
       </Card>
@@ -228,16 +216,38 @@ export default function SettingsPage() {
 
       <Card className="border-destructive/25 bg-destructive/5">
         <CardHeader className="border-destructive/20">
-          <CardTitle className="text-lg font-semibold text-destructive">Danger zone</CardTitle>
+          <CardTitle className="flex items-center gap-2 text-lg font-semibold text-destructive">
+            <RotateCcw className="h-5 w-5" aria-hidden />
+            Reset
+          </CardTitle>
+          <p className="text-sm font-normal text-muted-foreground">
+            Start fresh on this device: plan, task checkmarks, and onboarding are cleared. This only affects this
+            browser.
+          </p>
         </CardHeader>
-        <CardContent className="space-y-2">
-          <Button variant="outline" className="w-full border-destructive/40 text-destructive" type="button" disabled>
-            Reset all progress
+        <CardContent className="space-y-3">
+          <Button
+            variant="destructive"
+            className="w-full"
+            type="button"
+            onClick={() => {
+              if (
+                typeof window !== 'undefined' &&
+                window.confirm(
+                  'Reset everything on this device? You will go through setup again. This cannot be undone.'
+                )
+              ) {
+                resetLocalState();
+                router.push('/onboarding');
+              }
+            }}
+          >
+            Reset and start over
           </Button>
           <Button variant="outline" className="w-full border-destructive/40 text-destructive" type="button" disabled>
             Delete account
           </Button>
-          <p className="text-xs text-muted-foreground">Destructive actions are disabled in this build.</p>
+          <p className="text-xs text-muted-foreground">Account deletion is not available in this build.</p>
         </CardContent>
       </Card>
 
