@@ -85,11 +85,11 @@ export default function ModuleDetailPage() {
                 ~{part.estimatedHours ?? 0} h · {part.tasks.length} tasks
               </p>
             </CardHeader>
-            <CardContent className="space-y-3 pt-4">
+            <CardContent className="flex flex-col gap-3 pt-4">
               {part.tasks.map((task) => (
                 <label
                   key={task.id}
-                  className="surface-quiet flex cursor-pointer items-start gap-3 p-3 transition-colors duration-150 ease-out hover:bg-muted/50"
+                  className="surface-quiet flex w-full cursor-pointer items-start gap-3 p-3 transition-colors duration-150 ease-out hover:bg-muted/50"
                 >
                   <Checkbox
                     checked={task.completed}

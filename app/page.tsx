@@ -198,22 +198,22 @@ export default function Dashboard() {
             </CardTitle>
             <p className="text-xs text-muted-foreground">Below 70% accuracy: review soon</p>
           </CardHeader>
-          <CardContent className="space-y-3 pt-4">
+          <CardContent className="flex flex-col gap-3 pt-4">
             {weakAreas.length > 0 ? (
               weakAreas.map((area) => (
-                <Link key={area.id} href="/topic-mastery">
+                <Link
+                  key={area.id}
+                  href="/topic-mastery"
+                  className="block w-full rounded-lg outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
+                >
                   <div className="surface-quiet cursor-pointer p-3 transition-colors duration-150 ease-out hover:bg-muted/60">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold leading-snug text-foreground">
-                          {area.subtopic.replace(/_/g, ' ')}
-                        </p>
-                        <p className="mt-0.5 text-xs text-destructive">
-                          {area.practiceAccuracyPercent}% accuracy
-                        </p>
-                      </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="min-w-0 text-sm font-semibold leading-snug text-foreground">
+                        {area.subtopic.replace(/_/g, ' ')}
+                      </p>
                       <span className="shrink-0 font-serif text-lg font-medium tabular-nums text-destructive">
                         {area.practiceAccuracyPercent}%
+                        <span className="sr-only"> accuracy</span>
                       </span>
                     </div>
                   </div>
@@ -224,8 +224,8 @@ export default function Dashboard() {
                 Strong work—all areas at 70% or above.
               </p>
             )}
-            <Link href="/topic-mastery">
-              <Button variant="outline" className="mt-4 w-full text-sm">
+            <Link href="/topic-mastery" className="block w-full">
+              <Button variant="outline" className="w-full text-sm">
                 View all topics
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
