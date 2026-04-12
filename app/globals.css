@@ -4,6 +4,13 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  /* Stitch-style surface stack (tonal layering, not heavy outlines) */
+  --surface-canvas: #ebe8e2;
+  --surface-paper: #faf8f3;
+  --surface-raised: #ffffff;
+  --surface-nest: #f5f2ec;
+  --progress-track: #e4e0d8;
+
   /* Premium warm palette */
   --background: #faf8f3;
   --foreground: #2a2520;
@@ -54,6 +61,11 @@
 }
 
 .dark {
+  --surface-canvas: #221e1a;
+  --surface-paper: #1a1512;
+  --surface-raised: #2a2520;
+  --surface-nest: #242019;
+  --progress-track: #3a342e;
   --background: #1a1512;
   --foreground: #f5f1e8;
   --card: #2a2520;
@@ -103,7 +115,11 @@
 @theme inline {
   --font-sans: var(--font-lexend), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-newsreader), ui-serif, Georgia, 'Times New Roman', serif;
+  /** Reserved for code / stack traces only — prefer font-sans + tabular-nums for numbers */
   --font-mono: ui-monospace, monospace;
+  --color-surface-canvas: var(--surface-canvas);
+  --color-surface-nest: var(--surface-nest);
+  --color-progress-track: var(--progress-track);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -161,17 +177,40 @@
     @apply bg-background text-foreground antialiased;
     font-feature-settings: 'kern' 1, 'liga' 1;
   }
+  /**
+   * Serif (Newsreader) only on top-level page titles.
+   * Section headings (h2–h6) stay Lexend unless you add `font-serif` or `font-display`.
+   */
   h1,
-  h2,
-  .font-editorial {
+  .font-editorial,
+  .font-display {
     font-family: var(--font-serif), ui-serif, Georgia, serif;
     letter-spacing: -0.02em;
   }
 }
 
 @layer utilities {
+  /** Tonal inset (Stitch): light ring, no heavy 1px “frame” */
   .surface-quiet {
-    @apply bg-muted/40 border border-border rounded-lg;
+    @apply rounded-lg border border-transparent bg-secondary/45 ring-1 ring-border/35;
+  }
+
+  /** Numbers & stats: always Lexend + tabular figures (single sans voice) */
+  .text-stat {
+    @apply font-sans text-2xl font-medium tabular-nums tracking-tight text-foreground;
+  }
+
+  .text-stat-lg {
+    @apply font-sans text-3xl font-medium tabular-nums tracking-tight text-foreground;
+  }
+
+  /** Main content “paper” elevation */
+  .shadow-paper {
+    box-shadow: 0 12px 32px -8px rgba(42, 37, 32, 0.06);
+  }
+
+  .dark .shadow-paper {
+    box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.35);
   }
   .transition-ui {
     transition-duration: 180ms;

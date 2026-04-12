@@ -35,7 +35,7 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="flex min-h-[calc(100dvh-4rem)] items-center justify-center bg-muted px-4 py-10">
+    <div className="flex min-h-[calc(100dvh-4rem)] items-center justify-center bg-surface-canvas px-4 py-10">
       <div className="w-full max-w-2xl">
         <div className="mb-8">
           <div

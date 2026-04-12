@@ -16,7 +16,7 @@ const mdComponents: Components = {
     <h2 className="mt-3 font-serif text-lg font-medium text-foreground first:mt-0">{children}</h2>
   ),
   h3: ({ children }) => (
-    <h3 className="mt-3 text-base font-semibold text-foreground first:mt-0">{children}</h3>
+    <h3 className="mt-3 font-serif text-base font-semibold text-foreground first:mt-0">{children}</h3>
   ),
   p: ({ children }) => <p className="mb-3 last:mb-0 leading-relaxed">{children}</p>,
   ul: ({ children }) => <ul className="mb-3 list-disc space-y-1 pl-5 last:mb-0">{children}</ul>,
@@ -43,7 +43,7 @@ const mdComponents: Components = {
     if (inline) {
       return (
         <code
-          className="rounded bg-muted/80 px-1.5 py-0.5 font-mono text-[0.9em] text-foreground"
+          className="rounded bg-muted/80 px-1.5 py-0.5 font-sans text-[0.9em] font-medium tracking-tight text-foreground"
           {...props}
         >
           {children}
@@ -57,7 +57,7 @@ const mdComponents: Components = {
     );
   },
   pre: ({ children }) => (
-    <pre className="mb-3 overflow-x-auto rounded-lg border border-border bg-muted/50 p-3 text-xs last:mb-0">
+    <pre className="mb-3 overflow-x-auto rounded-lg border border-border/50 bg-muted/50 p-3 font-mono text-xs last:mb-0">
       {children}
     </pre>
   ),

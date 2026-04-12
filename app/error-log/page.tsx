@@ -245,13 +245,17 @@ export default function ErrorLogPage() {
                         <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-destructive">
                           You answered
                         </div>
-                        <div className="font-mono font-semibold text-foreground">{error.studentAnswer}</div>
+                        <div className="font-sans font-semibold tabular-nums text-foreground">
+                          {error.studentAnswer}
+                        </div>
                       </div>
                       <div className="rounded-lg border border-accent/30 bg-accent/5 p-3">
                         <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-accent">
                           Correct answer
                         </div>
-                        <div className="font-mono font-semibold text-foreground">{error.correctAnswer}</div>
+                        <div className="font-sans font-semibold tabular-nums text-foreground">
+                          {error.correctAnswer}
+                        </div>
                       </div>
                     </div>
 

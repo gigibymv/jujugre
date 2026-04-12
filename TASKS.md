@@ -2,7 +2,9 @@
 
 ## Récemment traité
 
-- **Error log — rangée d’actions** : le bouton « Mark reviewed » débordait de la carte (mélange `flex` + `w-full` sur un seul enfant). Corrigé avec `grid` + `min-w-0` (`app/error-log/page.tsx`). Même schéma aligné sur **Topic mastery** (`app/topic-mastery/page.tsx`).
+- **Stitch « Jujugre Editorial » (implémentation code)** : surfaces `--surface-canvas` / `--surface-nest`, `surface-quiet` tonal + ring léger, `shadow-paper`, progress « trait » (piste `progress-track`, remplissage `accent`), bouton primaire léger `bg-linear-to-b`, cartes adoucies, inputs fond `secondary` + focus sauge, `PageShell` sur canvas. Voir `app/globals.css` + `components/ui/*`.
+- **Typographie** : **Lexend** partout par défaut ; **Newsreader** seulement sur `h1`, citations, titres coach markdown, et titres explicitement `font-serif` / `font-display`. Chiffres = `text-stat` / `text-stat-lg` (sans + `tabular-nums`). **Mono** réservé aux blocs `<pre>` coach et aux traces `error-boundary`.
+- **Error log — rangée d’actions** : grille CTA + `min-w-0` (plus de débordement « Mark reviewed »).
 
 ## À garder en tête (layout)
 

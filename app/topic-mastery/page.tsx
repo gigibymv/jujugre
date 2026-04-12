@@ -124,21 +124,21 @@ export default function TopicMasteryPage() {
                 <div className="text-lg font-bold tabular-nums text-foreground">
                   {topic.practiceAccuracyPercent}%
                 </div>
-                <Progress value={topic.practiceAccuracyPercent} className="mt-1.5 h-1.5 bg-muted" />
+                <Progress value={topic.practiceAccuracyPercent} className="mt-1.5" />
               </div>
               <div className="border-x border-border text-center">
                 <div className="mb-1 text-xs font-medium text-muted-foreground">Completion</div>
                 <div className="text-lg font-bold tabular-nums text-foreground">
                   {topic.taskCompletionPercent}%
                 </div>
-                <Progress value={topic.taskCompletionPercent} className="mt-1.5 h-1.5 bg-muted" />
+                <Progress value={topic.taskCompletionPercent} className="mt-1.5" />
               </div>
               <div className="text-center">
                 <div className="mb-1 text-xs font-medium text-muted-foreground">Confidence</div>
                 <div className="text-lg font-bold tabular-nums text-foreground">
                   {topic.selfRatingAverage}/5
                 </div>
-                <Progress value={(topic.selfRatingAverage / 5) * 100} className="mt-1.5 h-1.5 bg-muted" />
+                <Progress value={(topic.selfRatingAverage / 5) * 100} className="mt-1.5" />
               </div>
             </div>
 
@@ -221,7 +221,9 @@ export default function TopicMasteryPage() {
         <section className="mb-page-section">
           <div className="mb-page-tight flex items-center gap-2 border-b border-border pb-3">
             <CheckCircle2 className="h-5 w-5 text-accent" aria-hidden />
-            <h2 className="text-lg font-semibold text-foreground">Mastered topics ({mastered.length})</h2>
+            <h2 className="font-sans text-lg font-semibold text-foreground">
+              Mastered topics ({mastered.length})
+            </h2>
             <span className="ml-auto text-xs font-semibold text-accent">Keep sharp</span>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">{mastered.map(renderMasteryCard)}</div>
@@ -232,7 +234,9 @@ export default function TopicMasteryPage() {
         <section className="mb-page-section">
           <div className="mb-page-tight flex items-center gap-2 border-b border-border pb-3">
             <TrendingUp className="h-5 w-5 text-muted-foreground" aria-hidden />
-            <h2 className="text-lg font-semibold text-foreground">Proficient topics ({proficient.length})</h2>
+            <h2 className="font-sans text-lg font-semibold text-foreground">
+              Proficient topics ({proficient.length})
+            </h2>
             <span className="ml-auto text-xs font-semibold text-muted-foreground">On track</span>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">{proficient.map(renderMasteryCard)}</div>
@@ -243,7 +247,9 @@ export default function TopicMasteryPage() {
         <section className="mb-page-section">
           <div className="mb-page-tight flex items-center gap-2 border-b border-border pb-3">
             <AlertTriangle className="h-5 w-5 text-destructive" aria-hidden />
-            <h2 className="text-lg font-semibold text-foreground">Focus areas ({developing.length})</h2>
+            <h2 className="font-sans text-lg font-semibold text-foreground">
+              Focus areas ({developing.length})
+            </h2>
             <span className="ml-auto text-xs font-semibold text-destructive">Priority</span>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">{developing.map(renderMasteryCard)}</div>
@@ -254,7 +260,9 @@ export default function TopicMasteryPage() {
         <section className="mb-page-section">
           <div className="mb-page-tight flex items-center gap-2 border-b border-border pb-3">
             <Clock className="h-5 w-5 text-muted-foreground" aria-hidden />
-            <h2 className="text-lg font-semibold text-foreground">Not started ({notStarted.length})</h2>
+            <h2 className="font-sans text-lg font-semibold text-foreground">
+              Not started ({notStarted.length})
+            </h2>
             <span className="ml-auto text-xs font-semibold text-muted-foreground">Upcoming</span>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">{notStarted.map(renderMasteryCard)}</div>
@@ -291,7 +299,7 @@ export default function TopicMasteryPage() {
           </div>
 
           <div className="surface-quiet rounded-lg p-3">
-            <p className="font-mono text-xs leading-relaxed text-foreground">
+            <p className="font-sans text-xs leading-relaxed text-foreground">
               <span className="font-semibold">Formula:</span>
               <br />
               Score = (Accuracy × 0.40) + (Completion × 0.35) + (Confidence × 0.15 × 20) − (Accuracy &lt; 70%

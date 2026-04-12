@@ -16,6 +16,7 @@ import {
   Zap,
   AlertTriangle,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 
 const DAILY_QUOTES = [
@@ -133,7 +134,7 @@ export default function Dashboard() {
               <span>Module completion</span>
               <span className="font-semibold tabular-nums">{Math.round(progressPercent)}%</span>
             </div>
-            <Progress value={progressPercent} className="h-2 bg-muted" />
+            <Progress value={progressPercent} />
           </div>
           <Link href="/study-plan" className="block pt-2">
             <Button className="w-full font-medium sm:w-auto">
@@ -173,14 +174,12 @@ export default function Dashboard() {
             sub: 'since start',
           },
         ].map((stat) => (
-          <Card key={stat.label} className="bg-secondary/30">
+          <Card key={stat.label} className="border-border/40 bg-surface-nest/55">
             <CardHeader>
               <CardTitle className="page-eyebrow">{stat.label}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="font-serif text-3xl font-medium tabular-nums text-foreground">
-                {stat.value}
-              </div>
+              <div className="text-stat-lg">{stat.value}</div>
               <p
                 className="mt-1 text-xs text-muted-foreground"
                 suppressHydrationWarning={stat.label === 'Days remaining'}
@@ -214,7 +213,7 @@ export default function Dashboard() {
                       <p className="min-w-0 text-sm font-semibold leading-snug text-foreground">
                         {area.subtopic.replace(/_/g, ' ')}
                       </p>
-                      <span className="shrink-0 font-serif text-lg font-medium tabular-nums text-destructive">
+                      <span className="shrink-0 font-sans text-lg font-medium tabular-nums tracking-tight text-destructive">
                         {area.practiceAccuracyPercent}%
                         <span className="sr-only"> accuracy</span>
                       </span>
@@ -326,7 +325,7 @@ export default function Dashboard() {
               },
             ].map((stat) => (
               <div key={stat.label} className="surface-quiet p-3 text-center">
-                <div className={`font-serif text-2xl font-medium tabular-nums ${stat.className}`}>
+                <div className={cn('text-stat', stat.className)}>
                   {stat.count}
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">{stat.label}</p>

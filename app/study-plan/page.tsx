@@ -31,7 +31,7 @@ export default function StudyPlanPage() {
 
   if (!hydrated) {
     return (
-      <div className="flex min-h-[calc(100dvh-4rem)] items-center justify-center bg-muted text-sm text-muted-foreground">
+      <div className="flex min-h-[calc(100dvh-4rem)] items-center justify-center bg-surface-canvas text-sm text-muted-foreground">
         Loading…
       </div>
     );
@@ -88,9 +88,7 @@ export default function StudyPlanPage() {
             <CardTitle className="page-eyebrow">Weeks completed</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="font-serif text-3xl font-medium tabular-nums text-foreground">
-              {weeksCompleted}
-            </div>
+            <div className="text-stat-lg">{weeksCompleted}</div>
             <div className="mt-1 text-xs text-muted-foreground">of {totalWeeks} weeks</div>
           </CardContent>
         </Card>
@@ -100,10 +98,8 @@ export default function StudyPlanPage() {
             <CardTitle className="page-eyebrow">Overall progress</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="font-serif text-3xl font-medium tabular-nums text-foreground">
-              {Math.round(progressPercent)}%
-            </div>
-            <Progress value={progressPercent} className="mt-2 h-1.5 bg-muted" />
+            <div className="text-stat-lg">{Math.round(progressPercent)}%</div>
+            <Progress value={progressPercent} className="mt-2" />
           </CardContent>
         </Card>
 
@@ -112,9 +108,7 @@ export default function StudyPlanPage() {
             <CardTitle className="page-eyebrow">Days to GRE</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="font-serif text-3xl font-medium tabular-nums text-foreground">
-              {daysRemaining}
-            </div>
+            <div className="text-stat-lg">{daysRemaining}</div>
             <div className="mt-1 text-xs text-muted-foreground">
               {plan.targetGREDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
             </div>
@@ -148,7 +142,7 @@ export default function StudyPlanPage() {
           return (
             <div key={phase}>
               <div className="mb-4 border-b border-border pb-3">
-                <h2 className="text-lg font-semibold text-foreground">{phaseLabel}</h2>
+                <h2 className="font-sans text-lg font-semibold text-foreground">{phaseLabel}</h2>
                 <p className="mt-1 text-sm text-muted-foreground">{phaseWeeks}</p>
               </div>
 

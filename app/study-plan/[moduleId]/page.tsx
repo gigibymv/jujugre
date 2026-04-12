@@ -25,7 +25,7 @@ export default function ModuleDetailPage() {
 
   if (!hydrated) {
     return (
-      <div className="flex min-h-[calc(100dvh-4rem)] items-center justify-center bg-muted text-sm text-muted-foreground">
+      <div className="flex min-h-[calc(100dvh-4rem)] items-center justify-center bg-surface-canvas text-sm text-muted-foreground">
         Loading…
       </div>
     );
@@ -70,7 +70,7 @@ export default function ModuleDetailPage() {
             <span>Module progress</span>
             <span className="tabular-nums">{Math.round(pct)}%</span>
           </div>
-          <Progress value={pct} className="h-2 bg-muted" />
+          <Progress value={pct} />
         </div>
       </header>
 
