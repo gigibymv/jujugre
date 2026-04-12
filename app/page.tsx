@@ -94,8 +94,8 @@ export default function Dashboard() {
           <Badge
             className={`shrink-0 gap-1.5 border px-3 py-1.5 text-xs font-medium ${
               isOnTrack
-                ? 'border-accent/40 bg-accent/15 text-accent-foreground'
-                : 'border-destructive/30 bg-destructive/10 text-destructive'
+                ? 'border-accent/50 bg-accent/10 text-foreground [&_svg]:text-accent'
+                : 'border-destructive/40 bg-destructive/10 text-destructive [&_svg]:text-destructive'
             }`}
           >
             {isOnTrack ? (
