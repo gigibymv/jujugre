@@ -1,9 +1,13 @@
 import type { Metadata } from 'next'
-import { Geist, Newsreader } from 'next/font/google'
+import { Lexend, Newsreader } from 'next/font/google'
 import './globals.css'
 import { AppProviders } from './providers'
 
-const geist = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
+const lexend = Lexend({
+  subsets: ['latin'],
+  variable: '--font-lexend',
+  display: 'swap',
+})
 const newsreader = Newsreader({
   subsets: ['latin'],
   variable: '--font-newsreader',
@@ -27,7 +31,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geist.variable} ${newsreader.variable} font-sans antialiased`}
+        className={`${lexend.variable} ${newsreader.variable} font-sans antialiased`}
       >
         <AppProviders>{children}</AppProviders>
       </body>
