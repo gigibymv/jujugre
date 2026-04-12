@@ -7,19 +7,8 @@ const COACH_SYSTEM = `You are an expert GRE quantitative reasoning tutor. Always
 
 const NVIDIA_CHAT_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
 
-function fallbackReply(userText: string): { content: string; protocolCompliant: boolean } {
-  const lower = userText.toLowerCase();
-  const match = mockCoachMessages.find(
-    (m) =>
-      m.userQuestion.toLowerCase().includes(lower.slice(0, 40)) ||
-      lower.includes(m.userQuestion.toLowerCase().slice(0, 30))
-  );
-  if (match) {
-    return { content: match.coachResponse, protocolCompliant: match.protocolCompliant };
-  }
-  const template =
-    mockCoachMessages[0]?.coachResponse ??
-    `Here is a structured walkthrough:
+function genericFallback(userText: string): string {
+  return `Here is a structured walkthrough:
 
 1. **Identify the concept** — Name the skill the GRE is testing.
 2. **State the rule** — Write the definition or formula precisely.
@@ -33,7 +22,26 @@ function fallbackReply(userText: string): { content: string; protocolCompliant: 
 Your question: "${userText.slice(0, 200)}"
 
 If you share a specific problem or screenshot description, I can tailor each step to that item.`;
-  return { content: template, protocolCompliant: true };
+}
+
+function fallbackReply(userText: string): { content: string; protocolCompliant: boolean } {
+  const lower = userText.toLowerCase().trim();
+  if (lower.length < 4) {
+    return { content: genericFallback(userText), protocolCompliant: true };
+  }
+  const needle = lower.slice(0, 40);
+  const match = mockCoachMessages.find((m) => {
+    const q = m.userQuestion.toLowerCase();
+    const pref = q.slice(0, 30);
+    return (
+      (needle.length >= 4 && q.includes(needle)) ||
+      (pref.length >= 12 && lower.includes(pref))
+    );
+  });
+  if (match) {
+    return { content: match.coachResponse, protocolCompliant: match.protocolCompliant };
+  }
+  return { content: genericFallback(userText), protocolCompliant: true };
 }
 
 export async function POST(request: Request) {
@@ -52,7 +60,7 @@ export async function POST(request: Request) {
       ...messages.filter((m) => m.role !== 'system'),
     ];
 
-    const nvidiaKey = process.env.NVIDIA_API_KEY;
+    const nvidiaKey = process.env.NVIDIA_API_KEY?.trim();
     if (nvidiaKey) {
       const model = process.env.NVIDIA_MODEL || 'google/gemma-4-31b-it';
       const maxTokens = Number(process.env.NVIDIA_MAX_TOKENS || '8192');
