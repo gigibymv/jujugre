@@ -88,10 +88,8 @@ export default function CoachPage() {
 
   return (
     <PageShell narrow>
-      <header className="mb-10 border-b border-border pb-8">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-          Coach
-        </p>
+      <header className="mb-page-section border-b border-border pb-8">
+        <p className="page-eyebrow mb-2">Coach</p>
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-md border border-accent/40 bg-accent/15">
             <Sparkles className="h-5 w-5 text-accent" aria-hidden />
@@ -107,8 +105,8 @@ export default function CoachPage() {
         </div>
       </header>
 
-      <Card className="mb-8 bg-secondary/40">
-        <CardContent className="pt-5">
+      <Card className="mb-page-block bg-secondary/40">
+        <CardContent className="pt-6">
           <div className="flex gap-4">
             <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-accent" aria-hidden />
             <div className="space-y-2 text-sm">

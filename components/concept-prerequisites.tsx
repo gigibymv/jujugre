@@ -47,12 +47,12 @@ export function ConceptPrerequisites({ prerequisites, topicMasteryMap }: Concept
         {prerequisites_unlocked.length > 0 && (
           <div>
             <p className="mb-2 flex items-center gap-1 text-xs font-semibold text-foreground">
-              <CheckCircle2 className="h-4 w-4 text-chart-2" aria-hidden />
+              <CheckCircle2 className="h-4 w-4 text-accent" aria-hidden />
               Ready to learn ({prerequisites_unlocked.length})
             </p>
             <div className="space-y-2">
               {prerequisites_unlocked.map((prereq, idx) => (
-                <div key={idx} className="rounded-lg border border-chart-2/30 bg-chart-2/5 p-3">
+                <div key={idx} className="rounded-lg border border-accent/30 bg-accent/5 p-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1">
                       <p className="text-sm font-medium text-foreground">
@@ -60,7 +60,7 @@ export function ConceptPrerequisites({ prerequisites, topicMasteryMap }: Concept
                       </p>
                       <p className="mt-0.5 text-xs text-muted-foreground">{prereq.reason}</p>
                     </div>
-                    <Badge variant="outline" className="shrink-0 border-chart-2/40 bg-background text-chart-2">
+                    <Badge variant="outline" className="shrink-0 border-accent/40 bg-background text-accent">
                       Prerequisite met
                     </Badge>
                   </div>
@@ -73,7 +73,7 @@ export function ConceptPrerequisites({ prerequisites, topicMasteryMap }: Concept
         {prerequisites_locked.length > 0 && (
           <div>
             <p className="mb-2 flex items-center gap-1 text-xs font-semibold text-foreground">
-              <Lock className="h-4 w-4 text-chart-4" aria-hidden />
+              <Lock className="h-4 w-4 text-muted-foreground" aria-hidden />
               Prerequisites to master ({prerequisites_locked.length})
             </p>
             <div className="space-y-2">
@@ -82,7 +82,7 @@ export function ConceptPrerequisites({ prerequisites, topicMasteryMap }: Concept
                 const isNotStarted = !prereqMastery || prereqMastery === 'not_started';
 
                 return (
-                  <div key={idx} className="rounded-lg border border-chart-4/35 bg-muted/40 p-3">
+                  <div key={idx} className="rounded-lg border border-border bg-muted/40 p-3">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1">
                         <p className="text-sm font-medium text-foreground">
@@ -101,7 +101,7 @@ export function ConceptPrerequisites({ prerequisites, topicMasteryMap }: Concept
                           </p>
                         </div>
                       </div>
-                      <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-chart-4" aria-hidden />
+                      <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
                     </div>
                   </div>
                 );

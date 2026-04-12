@@ -42,16 +42,14 @@ export default function StudyPlanPage() {
     const isCurrent = module.id === plan.currentModuleId;
 
     if (isCompleted) return { icon: CheckCircle2, color: 'text-accent', bg: 'bg-secondary' };
-    if (isCurrent) return { icon: Zap, color: 'text-chart-2', bg: 'bg-secondary' };
+    if (isCurrent) return { icon: Zap, color: 'text-accent', bg: 'bg-secondary' };
     return { icon: Circle, color: 'text-muted-foreground/50', bg: 'bg-muted/50' };
   };
 
   return (
     <PageShell>
-      <header className="mb-10 border-b border-border pb-8">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-          Plan
-        </p>
+      <header className="mb-page-section border-b border-border pb-8">
+        <p className="page-eyebrow mb-2">Plan</p>
         <h1 className="font-serif text-3xl font-normal tracking-tight text-foreground md:text-4xl">
           Study plan
         </h1>
@@ -61,12 +59,12 @@ export default function StudyPlanPage() {
       </header>
 
       {plan.latenessState !== 'on_track' && (
-        <Card className="mb-8 border-l-[3px] border-l-chart-2 bg-secondary/60">
-          <CardContent className="pt-5">
+        <Card className="mb-page-block border-l-[3px] border-l-destructive bg-secondary/60">
+          <CardContent className="pt-6">
             <div className="flex items-start gap-3">
-              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-chart-2" aria-hidden />
+              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" aria-hidden />
               <div>
-                <p className="font-semibold text-chart-2">Slightly behind schedule</p>
+                <p className="font-semibold text-destructive">Slightly behind schedule</p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Recovery target:{' '}
                   <strong>
@@ -77,19 +75,17 @@ export default function StudyPlanPage() {
                     })}
                   </strong>
                 </p>
-                <p className="mt-2 text-xs text-chart-2">Finish one module this week to recover.</p>
+                <p className="mt-2 text-xs text-destructive">Finish one module this week to recover.</p>
               </div>
             </div>
           </CardContent>
         </Card>
       )}
 
-      <div className="mb-10 grid grid-cols-1 gap-4 md:grid-cols-4 md:gap-5">
+      <div className="mb-page-section grid grid-cols-1 gap-4 md:grid-cols-4 md:gap-5">
         <Card className="bg-secondary/40">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Weeks completed
-            </CardTitle>
+          <CardHeader>
+            <CardTitle className="page-eyebrow">Weeks completed</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="font-serif text-3xl font-medium tabular-nums text-foreground">
@@ -100,10 +96,8 @@ export default function StudyPlanPage() {
         </Card>
 
         <Card className="bg-secondary/40">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Overall progress
-            </CardTitle>
+          <CardHeader>
+            <CardTitle className="page-eyebrow">Overall progress</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="font-serif text-3xl font-medium tabular-nums text-foreground">
@@ -114,10 +108,8 @@ export default function StudyPlanPage() {
         </Card>
 
         <Card className="bg-secondary/40">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Days to GRE
-            </CardTitle>
+          <CardHeader>
+            <CardTitle className="page-eyebrow">Days to GRE</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="font-serif text-3xl font-medium tabular-nums text-foreground">
@@ -130,10 +122,8 @@ export default function StudyPlanPage() {
         </Card>
 
         <Card className="bg-secondary/40">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Current phase
-            </CardTitle>
+          <CardHeader>
+            <CardTitle className="page-eyebrow">Current phase</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-sm font-semibold text-foreground">
@@ -232,7 +222,7 @@ export default function StudyPlanPage() {
         })}
       </div>
 
-      <Card className="mt-10 bg-secondary/40">
+      <Card className="mt-page-section bg-secondary/40">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
             <Calendar className="h-5 w-5 text-accent" aria-hidden />

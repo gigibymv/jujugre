@@ -77,7 +77,7 @@ export default function ModuleDetailPage() {
       <div className="space-y-6">
         {module.parts.map((part) => (
           <Card key={part.id}>
-            <CardHeader className="border-b border-border pb-2">
+            <CardHeader>
               <CardTitle className="text-base font-semibold text-foreground">
                 Part {part.partNumber}: {part.title}
               </CardTitle>

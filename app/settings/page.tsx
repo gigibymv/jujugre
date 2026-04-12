@@ -20,10 +20,8 @@ export default function SettingsPage() {
 
   return (
     <PageShell narrow>
-      <header className="mb-10 border-b border-border pb-8">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-          Account
-        </p>
+      <header className="mb-page-section border-b border-border pb-8">
+        <p className="page-eyebrow mb-2">Account</p>
         <h1 className="font-serif text-3xl font-normal tracking-tight text-foreground md:text-4xl">
           Settings
         </h1>
@@ -86,7 +84,7 @@ export default function SettingsPage() {
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg font-semibold text-foreground">
-            <Calendar className="h-5 w-5 text-chart-2" aria-hidden />
+            <Calendar className="h-5 w-5 text-accent" aria-hidden />
             Study plan
           </CardTitle>
         </CardHeader>
@@ -135,7 +133,7 @@ export default function SettingsPage() {
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg font-semibold text-foreground">
-            <BookOpen className="h-5 w-5 text-chart-2" aria-hidden />
+            <BookOpen className="h-5 w-5 text-accent" aria-hidden />
             Initial weak areas
           </CardTitle>
         </CardHeader>
@@ -161,7 +159,7 @@ export default function SettingsPage() {
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg font-semibold text-foreground">
-            <Bell className="h-5 w-5 text-chart-2" aria-hidden />
+            <Bell className="h-5 w-5 text-accent" aria-hidden />
             Notifications
           </CardTitle>
         </CardHeader>
@@ -211,7 +209,7 @@ export default function SettingsPage() {
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg font-semibold text-foreground">
-            <Lock className="h-5 w-5 text-destructive" aria-hidden />
+            <Lock className="h-5 w-5 text-muted-foreground" aria-hidden />
             Account and security
           </CardTitle>
         </CardHeader>
@@ -229,7 +227,7 @@ export default function SettingsPage() {
       </Card>
 
       <Card className="border-destructive/25 bg-destructive/5">
-        <CardHeader>
+        <CardHeader className="border-destructive/20">
           <CardTitle className="text-lg font-semibold text-destructive">Danger zone</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">

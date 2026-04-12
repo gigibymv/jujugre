@@ -35,7 +35,7 @@ export class ErrorBoundary extends Component<Props, State> {
         this.props.fallback || (
           <div className="flex min-h-screen items-center justify-center bg-background p-4">
             <Card className="w-full max-w-md">
-              <CardHeader className="border-b border-border">
+              <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-destructive">
                   <AlertCircle className="h-5 w-5" aria-hidden />
                   Something went wrong

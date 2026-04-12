@@ -30,8 +30,8 @@ export default function TopicMasteryPage() {
       case 'mastered':
         return {
           bg: 'bg-muted/50',
-          border: 'border-chart-2/50',
-          text: 'text-chart-2',
+          border: 'border-accent/45',
+          text: 'text-accent',
           icon: CheckCircle2,
         };
       case 'proficient':
@@ -171,7 +171,8 @@ export default function TopicMasteryPage() {
 
   return (
     <PageShell>
-      <header className="mb-10 border-b border-border pb-6">
+      <header className="mb-page-section border-b border-border pb-6">
+        <p className="page-eyebrow mb-2">Topics</p>
         <h1 className="mb-2 font-serif text-3xl font-normal tracking-tight text-foreground md:text-4xl">
           Topic mastery
         </h1>
@@ -180,11 +181,11 @@ export default function TopicMasteryPage() {
         </p>
       </header>
 
-      <div className="mb-8">
+      <div className="mb-page-block">
         <ErrorPatternInsights patterns={mockErrorPatterns} />
       </div>
 
-      <div className="mb-10">
+      <div className="mb-page-section">
         <ConceptPrerequisites
           prerequisites={mockConceptPrerequisites}
           topicMasteryMap={mockTopicMastery.reduce(
@@ -197,18 +198,16 @@ export default function TopicMasteryPage() {
         />
       </div>
 
-      <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-4">
+      <div className="mb-page-section grid grid-cols-1 gap-6 md:grid-cols-4">
         {[
-          { label: 'Mastered', count: mastered.length, hint: 'Strong command', tone: 'text-chart-2' },
+          { label: 'Mastered', count: mastered.length, hint: 'Strong command', tone: 'text-accent' },
           { label: 'Proficient', count: proficient.length, hint: 'Solid foundation', tone: 'text-foreground' },
           { label: 'Focus areas', count: developing.length, hint: 'Needs attention', tone: 'text-destructive' },
           { label: 'Not started', count: notStarted.length, hint: 'Coming up', tone: 'text-muted-foreground' },
         ].map((s) => (
           <Card key={s.label}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                {s.label}
-              </CardTitle>
+            <CardHeader>
+              <CardTitle className="page-eyebrow">{s.label}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className={`text-3xl font-bold tabular-nums ${s.tone}`}>{s.count}</div>
@@ -219,19 +218,19 @@ export default function TopicMasteryPage() {
       </div>
 
       {mastered.length > 0 && (
-        <section className="mb-12">
-          <div className="mb-4 flex items-center gap-2 border-b border-border pb-3">
-            <CheckCircle2 className="h-5 w-5 text-chart-2" aria-hidden />
+        <section className="mb-page-section">
+          <div className="mb-page-tight flex items-center gap-2 border-b border-border pb-3">
+            <CheckCircle2 className="h-5 w-5 text-accent" aria-hidden />
             <h2 className="text-lg font-semibold text-foreground">Mastered topics ({mastered.length})</h2>
-            <span className="ml-auto text-xs font-semibold text-chart-2">Keep sharp</span>
+            <span className="ml-auto text-xs font-semibold text-accent">Keep sharp</span>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">{mastered.map(renderMasteryCard)}</div>
         </section>
       )}
 
       {proficient.length > 0 && (
-        <section className="mb-12">
-          <div className="mb-4 flex items-center gap-2 border-b border-border pb-3">
+        <section className="mb-page-section">
+          <div className="mb-page-tight flex items-center gap-2 border-b border-border pb-3">
             <TrendingUp className="h-5 w-5 text-muted-foreground" aria-hidden />
             <h2 className="text-lg font-semibold text-foreground">Proficient topics ({proficient.length})</h2>
             <span className="ml-auto text-xs font-semibold text-muted-foreground">On track</span>
@@ -241,8 +240,8 @@ export default function TopicMasteryPage() {
       )}
 
       {developing.length > 0 && (
-        <section className="mb-12">
-          <div className="mb-4 flex items-center gap-2 border-b border-border pb-3">
+        <section className="mb-page-section">
+          <div className="mb-page-tight flex items-center gap-2 border-b border-border pb-3">
             <AlertTriangle className="h-5 w-5 text-destructive" aria-hidden />
             <h2 className="text-lg font-semibold text-foreground">Focus areas ({developing.length})</h2>
             <span className="ml-auto text-xs font-semibold text-destructive">Priority</span>
@@ -252,8 +251,8 @@ export default function TopicMasteryPage() {
       )}
 
       {notStarted.length > 0 && (
-        <section className="mb-12">
-          <div className="mb-4 flex items-center gap-2 border-b border-border pb-3">
+        <section className="mb-page-section">
+          <div className="mb-page-tight flex items-center gap-2 border-b border-border pb-3">
             <Clock className="h-5 w-5 text-muted-foreground" aria-hidden />
             <h2 className="text-lg font-semibold text-foreground">Not started ({notStarted.length})</h2>
             <span className="ml-auto text-xs font-semibold text-muted-foreground">Upcoming</span>
@@ -262,7 +261,7 @@ export default function TopicMasteryPage() {
         </section>
       )}
 
-      <Card className="mt-10">
+      <Card className="mt-page-section">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
             <BarChart3 className="h-5 w-5 text-muted-foreground" aria-hidden />

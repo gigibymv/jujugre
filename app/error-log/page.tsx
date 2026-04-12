@@ -48,7 +48,8 @@ export default function ErrorLogPage() {
 
   return (
     <PageShell>
-      <header className="mb-10 border-b border-border pb-6">
+      <header className="mb-page-section border-b border-border pb-6">
+        <p className="page-eyebrow mb-2">Review</p>
         <h1 className="mb-2 font-serif text-3xl font-normal tracking-tight text-foreground md:text-4xl">
           Error log
         </h1>
@@ -57,12 +58,10 @@ export default function ErrorLogPage() {
         </p>
       </header>
 
-      <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-4">
+      <div className="mb-page-section grid grid-cols-1 gap-6 md:grid-cols-4">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Total errors
-            </CardTitle>
+          <CardHeader>
+            <CardTitle className="page-eyebrow">Total errors</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold tabular-nums text-foreground">{mockErrorLogEntries.length}</div>
@@ -70,14 +69,12 @@ export default function ErrorLogPage() {
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Unreviewed
-            </CardTitle>
+          <CardHeader>
+            <CardTitle className="page-eyebrow">Unreviewed</CardTitle>
           </CardHeader>
           <CardContent>
             <div
-              className={`text-3xl font-bold tabular-nums ${unreviewedCount > 0 ? 'text-destructive' : 'text-chart-2'}`}
+              className={`text-3xl font-bold tabular-nums ${unreviewedCount > 0 ? 'text-destructive' : 'text-accent'}`}
             >
               {unreviewedCount}
             </div>
@@ -88,23 +85,19 @@ export default function ErrorLogPage() {
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Reviewed
-            </CardTitle>
+          <CardHeader>
+            <CardTitle className="page-eyebrow">Reviewed</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold tabular-nums text-chart-2">
+            <div className="text-3xl font-bold tabular-nums text-accent">
               {mockErrorLogEntries.filter((e) => e.reviewed).length}
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Top issue
-            </CardTitle>
+          <CardHeader>
+            <CardTitle className="page-eyebrow">Top issue</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-sm font-bold text-foreground">
@@ -118,10 +111,10 @@ export default function ErrorLogPage() {
       </div>
 
       {reviewDueNow > 0 && (
-        <Card className="mb-8 border-l-4 border-l-chart-4 bg-muted/30">
+        <Card className="mb-page-block border-l-4 border-l-muted-foreground bg-muted/30">
           <CardContent className="pt-4">
             <div className="flex items-start gap-3">
-              <Clock className="mt-0.5 h-5 w-5 shrink-0 text-chart-4" aria-hidden />
+              <Clock className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
               <div>
                 <p className="font-semibold text-foreground">
                   {reviewDueNow} error{reviewDueNow !== 1 ? 's' : ''} due for review
@@ -135,7 +128,7 @@ export default function ErrorLogPage() {
         </Card>
       )}
 
-      <div className="mb-8 flex flex-col gap-3 md:flex-row">
+      <div className="mb-page-block flex flex-col gap-3 md:flex-row">
         <div className="flex gap-1 rounded-lg border border-border bg-card p-1">
           <Button
             variant={filterReviewed === 'unreviewed' ? 'default' : 'ghost'}
@@ -178,9 +171,9 @@ export default function ErrorLogPage() {
 
       <div className="space-y-3">
         {sorted.length === 0 ? (
-          <Card className="border-l-4 border-l-chart-2 bg-muted/20">
+          <Card className="border-l-4 border-l-accent bg-muted/20">
             <CardContent className="pb-6 pt-6 text-center">
-              <CheckCircle2 className="mx-auto mb-3 h-12 w-12 text-chart-2" aria-hidden />
+              <CheckCircle2 className="mx-auto mb-3 h-12 w-12 text-accent" aria-hidden />
               <p className="mb-1 font-semibold text-foreground">All errors reviewed</p>
               <p className="text-sm text-muted-foreground">
                 Keep practicing to stay ahead of new mistakes.
@@ -206,7 +199,7 @@ export default function ErrorLogPage() {
                   error.reviewed
                     ? 'border-border bg-muted/20'
                     : isReviewDue
-                      ? 'border-chart-4/40 bg-muted/30'
+                      ? 'border-muted-foreground/35 bg-muted/30'
                       : 'border-border bg-card'
                 }`}
               >
@@ -254,8 +247,8 @@ export default function ErrorLogPage() {
                         </div>
                         <div className="font-mono font-semibold text-foreground">{error.studentAnswer}</div>
                       </div>
-                      <div className="rounded-lg border border-chart-2/30 bg-chart-2/5 p-3">
-                        <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-chart-2">
+                      <div className="rounded-lg border border-accent/30 bg-accent/5 p-3">
+                        <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-accent">
                           Correct answer
                         </div>
                         <div className="font-mono font-semibold text-foreground">{error.correctAnswer}</div>
@@ -324,7 +317,7 @@ export default function ErrorLogPage() {
         )}
       </div>
 
-      <Card className="mt-10">
+      <Card className="mt-page-section">
         <CardHeader>
           <CardTitle className="text-base font-semibold text-foreground">How to use this log</CardTitle>
         </CardHeader>

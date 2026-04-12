@@ -22,7 +22,7 @@ const masteryGateLabels: Record<
   conceptual_error: {
     label: 'Conceptual error',
     description: 'You understand the idea but applied it incorrectly.',
-    box: 'border-chart-4/40 bg-muted/40',
+    box: 'border-border bg-muted/50',
     badge: 'border-border bg-muted text-foreground',
   },
   computational_error: {

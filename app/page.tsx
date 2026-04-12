@@ -83,10 +83,8 @@ export default function Dashboard() {
         </div>
       )}
 
-      <header className="mb-10 border-b border-border pb-8">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-          Dashboard
-        </p>
+      <header className="mb-page-section border-b border-border pb-8">
+        <p className="page-eyebrow mb-2">Dashboard</p>
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <blockquote className="max-w-2xl font-serif text-xl font-normal leading-snug tracking-tight text-foreground md:text-2xl">
             <span className="text-muted-foreground">&ldquo;</span>
@@ -116,12 +114,10 @@ export default function Dashboard() {
         <p className="mt-4 text-sm text-muted-foreground">{supportiveMessage}</p>
       </header>
 
-      <Card className="mb-10 border-l-[3px] border-l-accent">
+      <Card className="mb-page-section border-l-[3px] border-l-accent">
         <CardContent className="space-y-4 pt-6">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Today&apos;s focus
-            </p>
+            <p className="page-eyebrow">Today&apos;s focus</p>
             <h2 className="mt-1 font-serif text-2xl font-normal tracking-tight text-foreground">
               {currentModule?.title}
             </h2>
@@ -145,7 +141,7 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      <div className="mb-10 grid grid-cols-1 gap-4 md:grid-cols-4 md:gap-5">
+      <div className="mb-page-section grid grid-cols-1 gap-4 md:grid-cols-4 md:gap-5">
         {[
           {
             label: 'Days remaining',
@@ -175,10 +171,8 @@ export default function Dashboard() {
           },
         ].map((stat) => (
           <Card key={stat.label} className="bg-secondary/30">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                {stat.label}
-              </CardTitle>
+            <CardHeader>
+              <CardTitle className="page-eyebrow">{stat.label}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="font-serif text-3xl font-medium tabular-nums text-foreground">
@@ -195,11 +189,11 @@ export default function Dashboard() {
         ))}
       </div>
 
-      <div className="mb-10 grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="mb-page-section grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>
-          <CardHeader className="border-b border-border pb-3">
+          <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
-              <AlertCircle className="h-5 w-5 text-chart-2" aria-hidden />
+              <AlertCircle className="h-5 w-5 text-destructive" aria-hidden />
               Focus areas
             </CardTitle>
             <p className="text-xs text-muted-foreground">Below 70% accuracy: review soon</p>
@@ -214,11 +208,11 @@ export default function Dashboard() {
                         <p className="text-sm font-semibold leading-snug text-foreground">
                           {area.subtopic.replace(/_/g, ' ')}
                         </p>
-                        <p className="mt-0.5 text-xs text-chart-2">
+                        <p className="mt-0.5 text-xs text-destructive">
                           {area.practiceAccuracyPercent}% accuracy
                         </p>
                       </div>
-                      <span className="shrink-0 font-serif text-lg font-medium tabular-nums text-chart-2">
+                      <span className="shrink-0 font-serif text-lg font-medium tabular-nums text-destructive">
                         {area.practiceAccuracyPercent}%
                       </span>
                     </div>
@@ -240,7 +234,7 @@ export default function Dashboard() {
         </Card>
 
         <Card>
-          <CardHeader className="border-b border-border pb-3">
+          <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
               <Zap className="h-5 w-5 text-accent" aria-hidden />
               Next actions
@@ -289,7 +283,7 @@ export default function Dashboard() {
       </div>
 
       <Card>
-        <CardHeader className="border-b border-border pb-3">
+        <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
             <TrendingUp className="h-5 w-5 text-accent" aria-hidden />
             Overall progress
@@ -311,12 +305,12 @@ export default function Dashboard() {
               {
                 label: 'Developing',
                 count: mockTopicMastery.filter((t) => t.masteryLevel === 'developing').length,
-                className: 'text-chart-2',
+                className: 'text-destructive',
               },
               {
                 label: 'Not started',
                 count: mockTopicMastery.filter((t) => t.masteryLevel === 'not_started').length,
-                className: 'text-chart-5',
+                className: 'text-muted-foreground',
               },
             ].map((stat) => (
               <div key={stat.label} className="surface-quiet p-3 text-center">
