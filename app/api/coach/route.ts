@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import { mockCoachMessages } from '@/lib/mock-data';
 
-type ChatMessage = { role: 'user' | 'assistant'; content: string };
+type ChatMessage = { role: 'user' | 'assistant' | 'system'; content: string };
+
+const COACH_SYSTEM = `You are an expert GRE quantitative reasoning tutor. Always respond with rigorous, exam-relevant explanations. Prefer this structure when it fits: (1) concept (2) rule/formula (3) steps (4) computation (5) check (6) final answer (7) takeaway (8) common trap. Be concise but complete.`;
+
+const NVIDIA_CHAT_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
 
 function fallbackReply(userText: string): { content: string; protocolCompliant: boolean } {
   const lower = userText.toLowerCase();
@@ -43,24 +47,76 @@ export async function POST(request: Request) {
     const lastUser = [...messages].reverse().find((m) => m.role === 'user');
     const userText = lastUser?.content?.trim() || '';
 
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
+    const apiMessages: ChatMessage[] = [
+      { role: 'system', content: COACH_SYSTEM },
+      ...messages.filter((m) => m.role !== 'system'),
+    ];
+
+    const nvidiaKey = process.env.NVIDIA_API_KEY;
+    if (nvidiaKey) {
+      const model = process.env.NVIDIA_MODEL || 'google/gemma-4-31b-it';
+      const maxTokens = Number(process.env.NVIDIA_MAX_TOKENS || '8192');
+      const temperature = Number(process.env.NVIDIA_TEMPERATURE || '0.7');
+      const topP = Number(process.env.NVIDIA_TOP_P || '0.95');
+      const enableThinking =
+        process.env.NVIDIA_ENABLE_THINKING !== 'false';
+
+      const res = await fetch(NVIDIA_CHAT_URL, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${nvidiaKey}`,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          model,
+          messages: apiMessages,
+          max_tokens: Number.isFinite(maxTokens) ? maxTokens : 8192,
+          temperature: Number.isFinite(temperature) ? temperature : 0.7,
+          top_p: Number.isFinite(topP) ? topP : 0.95,
+          stream: false,
+          ...(enableThinking && {
+            chat_template_kwargs: { enable_thinking: true },
+          }),
+        }),
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error('[jujugre] NVIDIA API error:', res.status, errText);
+        const fb = fallbackReply(userText);
+        return NextResponse.json(fb);
+      }
+
+      const data = (await res.json()) as {
+        choices?: Array<{ message?: { content?: string | null } }>;
+      };
+      const content = data.choices?.[0]?.message?.content?.trim();
+      if (!content) {
+        const fb = fallbackReply(userText);
+        return NextResponse.json(fb);
+      }
+
+      return NextResponse.json({ content, protocolCompliant: true });
+    }
+
+    const openaiKey = process.env.OPENAI_API_KEY;
+    if (!openaiKey) {
       const fb = fallbackReply(userText);
       return NextResponse.json(fb);
     }
 
     const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-    const system = `You are an expert GRE quantitative reasoning tutor. Always respond with rigorous, exam-relevant explanations. Prefer this structure when it fits: (1) concept (2) rule/formula (3) steps (4) computation (5) check (6) final answer (7) takeaway (8) common trap. Be concise but complete.`;
 
     const res = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${openaiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         model,
-        messages: [{ role: 'system', content: system }, ...messages],
+        messages: apiMessages,
         temperature: 0.4,
       }),
     });
