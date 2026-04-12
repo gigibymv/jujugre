@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { CoachMessageBody } from '@/components/coach-message-body';
 import { PageShell } from '@/components/page-shell';
 import { mockCoachMessages } from '@/lib/mock-data';
 import { useState } from 'react';
@@ -232,9 +233,10 @@ export default function CoachPage() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="rounded-lg border border-border bg-muted/30 p-4">
-                            <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
-                              {msg.content}
-                            </p>
+                            <CoachMessageBody
+                              content={msg.content}
+                              className="text-sm leading-relaxed text-foreground"
+                            />
                             {msg.protocolCompliant && (
                               <div className="mt-3 border-t border-border pt-3">
                                 <Badge
@@ -283,9 +285,10 @@ export default function CoachPage() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="rounded-lg border border-border bg-muted/30 p-4">
-                          <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
-                            {streamBuffer || '…'}
-                          </p>
+                          <CoachMessageBody
+                            content={streamBuffer || '…'}
+                            className="text-sm leading-relaxed text-foreground"
+                          />
                           {isLoading && (
                             <p className="mt-2 text-xs text-muted-foreground">Streaming answer…</p>
                           )}

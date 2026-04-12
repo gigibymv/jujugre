@@ -20,11 +20,19 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
+import { useUserPlan } from '@/components/user-plan-provider';
 import { cn } from '@/lib/utils';
 
 export default function AppNav() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { studyPlan, hasCompletedOnboarding, hydrated } = useUserPlan();
+
+  const sessionHref =
+    hydrated && !hasCompletedOnboarding
+      ? '/onboarding'
+      : `/study-plan/${studyPlan.currentModuleId}`;
+  const sessionActive = pathname?.startsWith('/study-plan/');
 
   const isActive = (path: string) =>
     pathname === path || pathname?.startsWith(path + '/');
@@ -44,7 +52,7 @@ export default function AppNav() {
         'sticky top-0 z-50 border-b border-primary-foreground/12 bg-primary text-primary-foreground shadow-[0_1px_0_rgba(0,0,0,0.08)]'
       )}
     >
-      <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-6 px-5 md:px-8">
+      <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-3 px-4 sm:gap-6 sm:px-5 md:px-8">
         <Link
           href="/"
           className="flex shrink-0 items-center gap-3 transition-opacity duration-150 ease-out hover:opacity-90"
@@ -81,53 +89,72 @@ export default function AppNav() {
           })}
         </div>
 
-        <div className="hidden items-center rounded-md border border-primary-foreground/18 bg-primary-foreground/8 px-3 py-1.5 text-xs font-medium text-primary-foreground/90 sm:flex">
-          Study session
-        </div>
-
-        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="text-primary-foreground hover:bg-primary-foreground/10 md:hidden"
-              aria-label="Open menu"
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent
-            side="right"
-            className="border-primary-foreground/15 bg-primary text-primary-foreground"
+        <div className="flex shrink-0 items-center gap-1.5">
+          <Link
+            href={sessionHref}
+            className={cn(
+              'flex items-center gap-1.5 rounded-md border px-2 py-1.5 text-xs font-medium outline-none ring-offset-primary transition-colors duration-150 ease-out focus-visible:ring-2 focus-visible:ring-primary-foreground/40 sm:gap-2 sm:px-3',
+              sessionActive
+                ? 'border-accent/50 bg-accent/25 text-primary-foreground'
+                : 'border-primary-foreground/18 bg-primary-foreground/8 text-primary-foreground/90 hover:bg-primary-foreground/12'
+            )}
+            aria-label={
+              hydrated && !hasCompletedOnboarding
+                ? 'Continue onboarding'
+                : 'Open your current study module'
+            }
           >
-            <SheetHeader>
-              <SheetTitle className="text-primary-foreground">Menu</SheetTitle>
-            </SheetHeader>
-            <nav className="mt-6 flex flex-col gap-1">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const active = isActive(item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMobileOpen(false)}
-                    className={cn(
-                      'flex items-center gap-3 rounded-md px-3 py-3 text-sm font-medium transition-colors duration-150 ease-out',
-                      active
-                        ? 'bg-accent/35 text-primary-foreground'
-                        : 'text-primary-foreground/72 hover:bg-primary-foreground/10'
-                    )}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
-          </SheetContent>
-        </Sheet>
+            <BookOpen className="h-3.5 w-3.5 shrink-0 opacity-95 sm:h-4 sm:w-4" aria-hidden />
+            <span className="leading-none">
+              Study
+              <span className="hidden sm:inline"> session</span>
+            </span>
+          </Link>
+
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+            <SheetTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="text-primary-foreground hover:bg-primary-foreground/10 md:hidden"
+                aria-label="Open menu"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent
+              side="right"
+              className="border-primary-foreground/15 bg-primary text-primary-foreground"
+            >
+              <SheetHeader>
+                <SheetTitle className="text-primary-foreground">Menu</SheetTitle>
+              </SheetHeader>
+              <nav className="mt-6 flex flex-col gap-1">
+                {navItems.map((item) => {
+                  const Icon = item.icon;
+                  const active = isActive(item.href);
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMobileOpen(false)}
+                      className={cn(
+                        'flex items-center gap-3 rounded-md px-3 py-3 text-sm font-medium transition-colors duration-150 ease-out',
+                        active
+                          ? 'bg-accent/35 text-primary-foreground'
+                          : 'text-primary-foreground/72 hover:bg-primary-foreground/10'
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </nav>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
     </nav>
   );

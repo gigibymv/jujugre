@@ -241,8 +241,11 @@ export default function Dashboard() {
             </CardTitle>
             <p className="text-xs text-muted-foreground">What to do next</p>
           </CardHeader>
-          <CardContent className="space-y-2 pt-4">
-            <Link href="/study-plan">
+          <CardContent className="flex flex-col gap-3 pt-4">
+            <Link
+              href="/study-plan"
+              className="block w-full rounded-lg outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
+            >
               <Button
                 variant="outline"
                 className="h-auto w-full justify-start py-3 text-left font-normal"
@@ -254,7 +257,10 @@ export default function Dashboard() {
                 <ArrowRight className="h-4 w-4 shrink-0 opacity-60" />
               </Button>
             </Link>
-            <Link href="/error-log">
+            <Link
+              href="/error-log"
+              className="block w-full rounded-lg outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
+            >
               <Button
                 variant="outline"
                 className="h-auto w-full justify-start py-3 text-left font-normal"
@@ -266,7 +272,10 @@ export default function Dashboard() {
                 <ArrowRight className="h-4 w-4 shrink-0 opacity-60" />
               </Button>
             </Link>
-            <Link href="/coach">
+            <Link
+              href="/coach"
+              className="block w-full rounded-lg outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
+            >
               <Button
                 variant="outline"
                 className="h-auto w-full justify-start py-3 text-left font-normal"
