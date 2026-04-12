@@ -151,13 +151,13 @@ export default function TopicMasteryPage() {
               </div>
             )}
 
-            <div className="flex gap-2 border-t border-border pt-2">
-              <Link href={`/coach?topic=${topic.topic}`} className="flex-1">
+            <div className="grid grid-cols-1 gap-2 border-t border-border pt-2 sm:grid-cols-2">
+              <Link href={`/coach?topic=${topic.topic}`} className="min-w-0">
                 <Button variant="outline" size="sm" className="w-full text-xs">
                   {coachLabel}
                 </Button>
               </Link>
-              <Link href="/error-log" className="flex-1">
+              <Link href="/error-log" className="min-w-0">
                 <Button variant="outline" size="sm" className="w-full text-xs">
                   Review errors
                 </Button>

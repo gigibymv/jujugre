@@ -283,10 +283,10 @@ export default function ErrorLogPage() {
                       <span className="italic">Source: {error.sourceReference}</span>
                     </div>
 
-                    <div className="flex gap-2 border-t border-border pt-2">
+                    <div className="grid grid-cols-1 gap-2 border-t border-border pt-2 sm:grid-cols-2">
                       {!error.reviewed && (
                         <>
-                          <Link href={`/coach?error=${error.id}`} className="flex-1">
+                          <Link href={`/coach?error=${error.id}`} className="min-w-0">
                             <Button variant="default" size="sm" className="w-full text-xs">
                               Discuss with coach
                             </Button>
@@ -294,7 +294,7 @@ export default function ErrorLogPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="w-full text-xs"
+                            className="w-full min-w-0 text-xs"
                             onClick={() => {
                               console.log('Marked', error.id, 'as reviewed');
                             }}
@@ -304,7 +304,11 @@ export default function ErrorLogPage() {
                         </>
                       )}
                       {error.reviewed && (
-                        <Button variant="outline" size="sm" className="w-full text-xs">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full text-xs sm:col-span-2"
+                        >
                           Review again
                         </Button>
                       )}
