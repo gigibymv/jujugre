@@ -1,6 +1,10 @@
 import { cn } from '@/lib/utils';
 import type { ReactNode } from 'react';
 
+/**
+ * Full-width “canvas” (muted) + inner “paper” (card background) so layout reads clearly
+ * against the nav and standalone cards on the page.
+ */
 export function PageShell({
   children,
   className,
@@ -12,14 +16,27 @@ export function PageShell({
   narrow?: boolean;
 }) {
   return (
-    <div className={cn('min-h-[calc(100dvh-4rem)] bg-background', className)}>
+    <div
+      className={cn(
+        'min-h-[calc(100dvh-4rem)] bg-muted',
+        className
+      )}
+    >
       <div
         className={cn(
-          'mx-auto w-full px-5 py-10 md:px-8 md:py-12',
+          'mx-auto w-full px-4 py-6 sm:px-5 md:px-8 md:py-10',
           narrow ? 'max-w-3xl' : 'max-w-5xl'
         )}
       >
-        {children}
+        <div
+          className={cn(
+            'rounded-2xl border border-border/90 bg-background shadow-sm',
+            'ring-1 ring-foreground/[0.06]',
+            'px-5 py-8 md:px-8 md:py-10'
+          )}
+        >
+          {children}
+        </div>
       </div>
     </div>
   );

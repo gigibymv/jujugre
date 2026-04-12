@@ -25,7 +25,7 @@ export default function ModuleDetailPage() {
 
   if (!hydrated) {
     return (
-      <div className="flex min-h-[calc(100dvh-4rem)] items-center justify-center bg-background text-sm text-muted-foreground">
+      <div className="flex min-h-[calc(100dvh-4rem)] items-center justify-center bg-muted text-sm text-muted-foreground">
         Loading…
       </div>
     );

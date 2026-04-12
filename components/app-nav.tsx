@@ -41,21 +41,20 @@ export default function AppNav() {
   return (
     <nav
       className={cn(
-        'sticky top-0 z-50 border-b border-[color-mix(in_oklab,var(--app-nav-foreground)_14%,var(--app-nav))]',
-        'bg-app-nav text-app-nav-foreground'
+        'sticky top-0 z-50 border-b border-primary-foreground/12 bg-primary text-primary-foreground shadow-[0_1px_0_rgba(0,0,0,0.08)]'
       )}
     >
       <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-6 px-5 md:px-8">
         <Link
           href="/"
-          className="flex shrink-0 items-center gap-3 transition-opacity duration-150 ease-out hover:opacity-85"
+          className="flex shrink-0 items-center gap-3 transition-opacity duration-150 ease-out hover:opacity-90"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-md border border-app-nav-border bg-app-nav-mark text-sm font-semibold text-app-nav-foreground">
+          <div className="flex h-10 w-10 items-center justify-center rounded-md border border-primary-foreground/25 bg-primary-foreground/10 text-sm font-semibold text-primary-foreground">
             Σ
           </div>
           <div className="hidden flex-col sm:flex">
             <span className="text-sm font-semibold leading-tight tracking-tight">Jujugre</span>
-            <span className="text-xs text-app-nav-muted">GRE quant prep</span>
+            <span className="text-xs text-primary-foreground/65">GRE quant prep</span>
           </div>
         </Link>
 
@@ -70,11 +69,11 @@ export default function AppNav() {
                   className={cn(
                     'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150 ease-out',
                     active
-                      ? 'bg-app-nav-active text-app-nav-active-foreground'
-                      : 'text-app-nav-subtle hover:bg-app-nav-hover hover:text-app-nav-foreground'
+                      ? 'bg-accent/35 text-primary-foreground'
+                      : 'text-primary-foreground/72 hover:bg-primary-foreground/10 hover:text-primary-foreground'
                   )}
                 >
-                  <Icon className="h-4 w-4 shrink-0 opacity-90" />
+                  <Icon className="h-4 w-4 shrink-0 opacity-95" />
                   <span className="hidden lg:inline">{item.label}</span>
                 </button>
               </Link>
@@ -82,7 +81,7 @@ export default function AppNav() {
           })}
         </div>
 
-        <div className="hidden items-center rounded-md border border-app-nav-border/50 bg-app-nav-pill px-3 py-1.5 text-xs font-medium text-app-nav-pill-foreground sm:flex">
+        <div className="hidden items-center rounded-md border border-primary-foreground/18 bg-primary-foreground/8 px-3 py-1.5 text-xs font-medium text-primary-foreground/90 sm:flex">
           Study session
         </div>
 
@@ -92,7 +91,7 @@ export default function AppNav() {
               type="button"
               variant="ghost"
               size="icon"
-              className="text-app-nav-pill-foreground hover:bg-app-nav-active hover:text-app-nav-foreground md:hidden"
+              className="text-primary-foreground hover:bg-primary-foreground/10 md:hidden"
               aria-label="Open menu"
             >
               <Menu className="h-5 w-5" />
@@ -100,10 +99,10 @@ export default function AppNav() {
           </SheetTrigger>
           <SheetContent
             side="right"
-            className="border-app-nav-active bg-app-nav text-app-nav-foreground"
+            className="border-primary-foreground/15 bg-primary text-primary-foreground"
           >
             <SheetHeader>
-              <SheetTitle className="text-app-nav-foreground">Menu</SheetTitle>
+              <SheetTitle className="text-primary-foreground">Menu</SheetTitle>
             </SheetHeader>
             <nav className="mt-6 flex flex-col gap-1">
               {navItems.map((item) => {
@@ -117,8 +116,8 @@ export default function AppNav() {
                     className={cn(
                       'flex items-center gap-3 rounded-md px-3 py-3 text-sm font-medium transition-colors duration-150 ease-out',
                       active
-                        ? 'bg-app-nav-active text-app-nav-active-foreground'
-                        : 'text-app-nav-subtle hover:bg-app-nav-hover hover:text-app-nav-foreground'
+                        ? 'bg-accent/35 text-primary-foreground'
+                        : 'text-primary-foreground/72 hover:bg-primary-foreground/10'
                     )}
                   >
                     <Icon className="h-4 w-4" />
