@@ -1,8 +1,8 @@
 'use client';
 
 /**
- * Dashboard layout and surface tokens aligned with Stitch export
- * “Jujugre Dashboard | The Scholarly Editorial”.
+ * Dashboard — editorial layout aligned with reference comps (cream canvas,
+ * white elevated cards, forest green accent, no oversized pill hero).
  */
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,27 +19,33 @@ import {
   BarChart3,
   CheckCircle2,
   AlertTriangle,
+  FileText,
+  Play,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 
-const STITCH_PRIMARY = '#4e6053';
-const STITCH_TRACK = '#e4e2dd';
-const STITCH_MUTED = '#645d57';
-const STITCH_INK = '#2a2520';
+/** Reference green — slightly darker for contrast on cream */
+const ACCENT = '#4a5d4e';
+const MUTED = '#5c564f';
+const INK = '#1f1c18';
 
 const DAILY_QUOTES = [
-  'Hard topics are just future strengths waiting to be unlocked.',
-  'Precision today builds confidence tomorrow.',
-  'Every problem solved is progress made.',
-  "You're learning the exact patterns the GRE tests.",
-  "Consistency over intensity—you've got this.",
-  'Master one concept, and build from there.',
-  'Rigor now means clarity on test day.',
-  'Your effort is compounding into skill.',
+  { text: 'Hard topics are just future strengths waiting to be unlocked.', by: null },
+  { text: 'Precision today builds confidence tomorrow.', by: null },
+  { text: 'Every problem solved is progress made.', by: null },
+  {
+    text: 'The essence of mathematics is not to make simple things complicated, but to make complicated things simple.',
+    by: 'S. Gudder',
+  },
+  { text: "You're learning the exact patterns the GRE tests.", by: null },
+  { text: "Consistency over intensity—you've got this.", by: null },
+  { text: 'Master one concept, and build from there.', by: null },
+  { text: 'Rigor now means clarity on test day.', by: null },
+  { text: 'Your effort is compounding into skill.', by: null },
 ];
 
-function getDailyQuote(dateString?: string): string {
+function getDailyQuote(dateString?: string): (typeof DAILY_QUOTES)[0] {
   const hashDate = dateString || new Date().toDateString();
   const hash = hashDate.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return DAILY_QUOTES[hash % DAILY_QUOTES.length];
@@ -60,10 +66,18 @@ function iconForTopic(topic: string) {
   return BarChart3;
 }
 
+function topicCategoryCaps(topic: string): string {
+  if (topic.startsWith('arithmetic_')) return 'Arithmetic';
+  if (topic.startsWith('algebra_')) return 'Algebra';
+  if (topic.startsWith('geometry_')) return 'Geometry';
+  if (topic.startsWith('data_analysis_')) return 'Data analysis';
+  return 'Quant';
+}
+
 export default function Dashboard() {
   const { user, studyPlan: plan, hasCompletedOnboarding, hydrated } = useUserPlan();
   const [isClient, setIsClient] = useState(false);
-  const [dailyQuote, setDailyQuote] = useState('');
+  const [dailyQuote, setDailyQuote] = useState<(typeof DAILY_QUOTES)[0] | null>(null);
 
   useEffect(() => {
     setIsClient(true);
@@ -89,9 +103,6 @@ export default function Dashboard() {
   const progressPercent = tasksTotal > 0 ? (tasksCompleted / tasksTotal) * 100 : 0;
 
   const isOnTrack = plan.latenessState === 'on_track';
-  const supportiveMessage = isOnTrack
-    ? `You're on pace. Week ${plan.currentWeekNumber} of 12.`
-    : `You're slightly behind. Complete one module this week to recover.`;
 
   const masteredCount = mockTopicMastery.filter((t) => t.masteryLevel === 'mastered').length;
   const avgAll =
@@ -112,21 +123,33 @@ export default function Dashboard() {
     },
   ];
 
+  const weekLabel = `Week ${plan.currentWeekNumber} of 12`;
+  const focusTitle = currentModule?.title ?? 'Your study plan';
+  const partLabel = currentPart?.title ?? 'Current part';
+
+  let questionsApprox = 0;
+  for (const m of plan.modules) {
+    for (const p of m.parts) {
+      questionsApprox += p.tasks.filter((t) => t.completed).length * 12;
+    }
+  }
+  questionsApprox += Math.round(mockTopicMastery.reduce((s, t) => s + t.practiceAccuracyPercent, 0) / 4);
+
   return (
     <PageShell variant="canvas">
       {hydrated && !hasCompletedOnboarding && (
         <div
-          className="mb-8 flex flex-col gap-3 rounded-2xl border border-[#e4e2dd] bg-white px-4 py-3 text-sm shadow-[0_4px_24px_-4px_rgba(42,37,32,0.04)] sm:flex-row sm:items-center sm:justify-between"
-          style={{ color: STITCH_INK }}
+          className="mb-8 flex flex-col gap-3 rounded-xl border border-[#dcd8cf] bg-white/90 px-4 py-3 text-sm shadow-sm sm:flex-row sm:items-center sm:justify-between"
+          style={{ color: INK }}
         >
-          <span style={{ color: STITCH_MUTED }}>
+          <span style={{ color: MUTED }}>
             Set your GRE date and weekly hours so the dashboard matches your plan.
           </span>
           <Link href="/onboarding">
             <Button
               size="sm"
-              className="shrink-0 uppercase tracking-widest text-white"
-              style={{ backgroundColor: STITCH_PRIMARY }}
+              className="shrink-0 text-xs font-semibold uppercase tracking-widest text-white"
+              style={{ backgroundColor: ACCENT }}
             >
               Complete setup
             </Button>
@@ -134,214 +157,230 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between lg:mb-12">
-        <blockquote
-          className="max-w-2xl font-serif text-xl font-normal leading-snug tracking-tight md:text-2xl"
-          style={{ color: STITCH_INK }}
-          aria-label="Daily encouragement"
-        >
-          <span style={{ color: STITCH_MUTED }}>&ldquo;</span>
-          {dailyQuote}
-          <span style={{ color: STITCH_MUTED }}>&rdquo;</span>
-        </blockquote>
-        <Badge
-          className={cn(
-            'shrink-0 gap-1.5 border px-3 py-1.5 text-xs font-medium',
-            isOnTrack
-              ? 'border-[#c3c8c1]/50 bg-[#f5f3ee]'
-              : 'border-red-200/80 bg-red-50 text-red-900'
-          )}
-          style={isOnTrack ? { color: STITCH_INK } : undefined}
-        >
-          {isOnTrack ? (
-            <>
-              <CheckCircle2 className="h-3.5 w-3.5" style={{ color: STITCH_PRIMARY }} aria-hidden />
-              On track
-            </>
-          ) : (
-            <>
-              <AlertTriangle className="h-3.5 w-3.5 text-red-600" aria-hidden />
-              Catch up
-            </>
-          )}
-        </Badge>
-      </div>
-      <p className="-mt-6 mb-10 text-sm lg:-mt-8 lg:mb-12" style={{ color: STITCH_MUTED }}>
-        {supportiveMessage}
-      </p>
+      {/* Top: status + quote — no extra redundant subtitle block */}
+      <header className="mb-8 lg:mb-10">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between sm:gap-8">
+          <div className="min-w-0 flex-1">
+            <Badge
+              variant="outline"
+              className={cn(
+                'mb-4 w-fit gap-1 border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em]',
+                isOnTrack
+                  ? 'border-[#c8c3ba] bg-white/80 text-[#4a4540]'
+                  : 'border-red-200 bg-red-50 text-red-900'
+              )}
+            >
+              {isOnTrack ? (
+                <>
+                  <CheckCircle2 className="h-3 w-3" style={{ color: ACCENT }} aria-hidden />
+                  On track
+                </>
+              ) : (
+                <>
+                  <AlertTriangle className="h-3 w-3 text-red-600" aria-hidden />
+                  Catch up
+                </>
+              )}
+            </Badge>
+            {dailyQuote && (
+              <>
+                <blockquote
+                  className="font-serif text-xl font-normal italic leading-snug tracking-tight text-[#2a2622] md:text-2xl lg:max-w-3xl"
+                  aria-label="Daily encouragement"
+                >
+                  &ldquo;{dailyQuote.text}&rdquo;
+                </blockquote>
+                {dailyQuote.by ? (
+                  <p
+                    className="mt-3 font-sans text-[10px] font-medium uppercase tracking-[0.28em] text-[#7a7269]"
+                  >
+                    — {dailyQuote.by}
+                  </p>
+                ) : null}
+              </>
+            )}
+          </div>
+        </div>
+      </header>
 
-      {/* Hero — Stitch: rounded-full white card, soft shadow */}
-      <section className="relative mb-12 lg:mb-16">
+      {/* Weekly card: rounded rectangle (not full pill), CTA on the right on large screens */}
+      <section className="mb-10 lg:mb-14">
         <div
-          className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full opacity-40 blur-3xl"
-          style={{ background: `linear-gradient(135deg, ${STITCH_PRIMARY}22, transparent)` }}
-          aria-hidden
-        />
-        <div
-          className="relative overflow-hidden rounded-full border border-[#e4e2dd]/60 bg-white px-6 py-10 shadow-[0_12px_32px_-8px_rgba(42,37,32,0.06)] sm:px-10 sm:py-12 md:px-14"
+          className="flex flex-col gap-8 rounded-2xl border border-[#e8e4dc] bg-white px-5 py-6 shadow-[0_8px_28px_-12px_rgba(31,28,24,0.08)] sm:px-7 sm:py-8 lg:flex-row lg:items-stretch lg:gap-10 lg:px-8 lg:py-7"
         >
-          <p
-            className="text-center text-[10px] font-semibold uppercase tracking-[0.28em]"
-            style={{ color: STITCH_MUTED }}
-          >
-            Weekly progression
-          </p>
-          <h1
-            className="mt-4 text-center font-serif text-2xl font-normal tracking-tight sm:text-3xl md:text-4xl"
-            style={{ color: STITCH_INK }}
-          >
-            {currentModule?.title ?? 'Your study plan'}
-          </h1>
-          <p className="mt-2 text-center text-sm" style={{ color: STITCH_MUTED }}>
-            Week {plan.currentWeekNumber} of 12 · {currentPart?.title}
-          </p>
-          <div className="mx-auto mt-8 max-w-md">
-            <div className="mb-2 flex justify-between text-xs font-medium" style={{ color: STITCH_MUTED }}>
-              <span>Module focus</span>
-              <span className="tabular-nums" style={{ color: STITCH_PRIMARY }}>
-                {Math.round(progressPercent)}%
-              </span>
-            </div>
-            <div className="h-2.5 w-full overflow-hidden rounded-full" style={{ backgroundColor: STITCH_TRACK }}>
-              <div
-                className="h-full rounded-full transition-all duration-500"
-                style={{
-                  width: `${progressPercent}%`,
-                  backgroundColor: STITCH_PRIMARY,
-                }}
-              />
+          <div className="min-w-0 flex-1">
+            <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-[#7a7269]">
+              Weekly progression
+            </p>
+            <h1 className="mt-2 font-serif text-xl font-normal tracking-tight text-[#1f1c18] sm:text-2xl lg:text-[1.65rem]">
+              Current focus: {weekLabel} — {focusTitle}
+            </h1>
+            <p className="mt-1.5 font-sans text-sm text-[#5c564f]">{partLabel}</p>
+
+            {/* Completion + Accuracy: labels tight to values, shared visual rhythm */}
+            <div className="mt-6 grid grid-cols-2 gap-6 sm:gap-10 lg:mt-7 lg:max-w-xl">
+              <div>
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7a7269]">
+                    Completion
+                  </span>
+                  <span className="font-serif text-2xl tabular-nums tracking-tight text-[#1f1c18]">
+                    {Math.round(progressPercent)}%
+                  </span>
+                </div>
+                <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-[#ebe7df]">
+                  <div
+                    className="h-full rounded-full transition-[width] duration-500"
+                    style={{ width: `${progressPercent}%`, backgroundColor: ACCENT }}
+                  />
+                </div>
+              </div>
+              <div>
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7a7269]">
+                    Accuracy
+                  </span>
+                  <span className="font-serif text-2xl tabular-nums tracking-tight text-[#1f1c18]">
+                    {avgAll}%
+                  </span>
+                </div>
+                <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-[#ebe7df]">
+                  <div
+                    className="h-full rounded-full transition-[width] duration-500"
+                    style={{ width: `${avgAll}%`, backgroundColor: ACCENT }}
+                  />
+                </div>
+              </div>
             </div>
           </div>
-          <div className="mt-10 flex justify-center">
-            <Link href="/study-plan">
+
+          <div className="flex shrink-0 flex-col justify-center lg:w-[min(100%,14rem)]">
+            <Link href="/study-plan" className="block w-full">
               <span
-                className="inline-flex items-center rounded-full px-8 py-3 text-center text-xs font-semibold uppercase tracking-[0.2em] text-white transition-transform active:scale-[0.98]"
-                style={{ backgroundColor: STITCH_PRIMARY }}
+                className="flex w-full items-center justify-center gap-2 rounded-full px-5 py-3.5 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-white shadow-sm transition-transform active:scale-[0.99] lg:py-3"
+                style={{ backgroundColor: ACCENT }}
               >
-                Continue studying
-                <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
+                Start today&apos;s work
+                <ArrowRight className="h-4 w-4 shrink-0 opacity-95" aria-hidden />
               </span>
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Middle — 12-col: focus (5) + next actions (7) */}
-      <div className="mb-12 grid grid-cols-1 gap-10 lg:mb-16 lg:grid-cols-12 lg:gap-12">
+      <div className="mb-10 grid grid-cols-1 gap-10 lg:mb-14 lg:grid-cols-12 lg:gap-12">
         <div className="lg:col-span-5">
-          <h2
-            className="mb-6 font-serif text-xl font-normal tracking-tight md:text-2xl"
-            style={{ color: STITCH_INK }}
-          >
-            Focus areas
-          </h2>
-          <p className="mb-4 text-sm" style={{ color: STITCH_MUTED }}>
-            Below 70% accuracy — review soon.
-          </p>
-          <div className="flex flex-col gap-3">
+          <div className="mb-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <h2 className="font-serif text-xl font-normal tracking-tight text-[#1f1c18] md:text-2xl">
+              Focus areas
+            </h2>
+            <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-[#7a7269]">
+              High priority
+            </span>
+          </div>
+          <div className="flex flex-col gap-2.5">
             {weakAreas.length > 0 ? (
               weakAreas.map((area) => {
                 const Icon = iconForTopic(area.topic);
+                const cat = topicCategoryCaps(area.topic);
                 return (
                   <Link
                     key={area.id}
                     href="/topic-mastery"
-                    className="flex items-center gap-4 rounded-xl bg-[#f5f3ee] px-4 py-3 transition-colors hover:bg-[#ebe8e0] sm:px-5"
+                    className="flex items-center gap-3 rounded-xl border border-transparent bg-[#f3f1eb] px-3 py-3 transition-colors hover:border-[#dcd8cf] hover:bg-[#ebe8e0] sm:gap-4 sm:px-4"
                   >
-                    <div
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white shadow-sm"
-                      style={{ color: STITCH_PRIMARY }}
-                    >
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white text-[#5a6b5c] shadow-sm">
                       <Icon className="h-5 w-5" aria-hidden />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium capitalize leading-snug" style={{ color: STITCH_INK }}>
+                      <p className="font-serif text-base font-medium capitalize leading-tight text-[#1f1c18]">
                         {area.subtopic.replace(/_/g, ' ')}
                       </p>
-                      <p className="text-xs" style={{ color: STITCH_MUTED }}>
-                        Practice accuracy
+                      <p className="mt-0.5 font-sans text-[9px] font-semibold uppercase tracking-[0.16em] text-[#7a7269]">
+                        {cat}
                       </p>
                     </div>
-                    <span
-                      className="shrink-0 font-serif text-lg tabular-nums tracking-tight"
-                      style={{ color: STITCH_PRIMARY }}
-                    >
-                      {area.practiceAccuracyPercent}%
-                    </span>
+                    <div className="shrink-0 text-right leading-none">
+                      <p className="font-serif text-xl tabular-nums tracking-tight text-[#1f1c18]">
+                        {area.practiceAccuracyPercent}%
+                      </p>
+                      <p className="mt-0.5 font-sans text-[9px] font-semibold uppercase tracking-[0.14em] text-[#7a7269]">
+                        Accuracy
+                      </p>
+                    </div>
                   </Link>
                 );
               })
             ) : (
-              <p className="rounded-xl bg-[#f5f3ee] px-4 py-6 text-sm italic" style={{ color: STITCH_MUTED }}>
+              <p className="rounded-xl bg-[#f3f1eb] px-4 py-5 text-sm text-[#5c564f]">
                 Strong work — all areas at 70% or above.
               </p>
             )}
           </div>
-          <Link href="/topic-mastery" className="mt-5 inline-block">
-            <span className="text-sm font-medium underline-offset-4 hover:underline" style={{ color: STITCH_PRIMARY }}>
-              View all topics
-            </span>
+          <Link href="/topic-mastery" className="mt-4 inline-block text-sm font-medium text-[#4a5d4e] underline-offset-4 hover:underline">
+            View all topics
           </Link>
         </div>
 
         <div className="lg:col-span-7">
-          <h2
-            className="mb-6 font-serif text-xl font-normal tracking-tight md:text-2xl"
-            style={{ color: STITCH_INK }}
-          >
-            Next actions
-          </h2>
-          <p className="mb-4 text-sm" style={{ color: STITCH_MUTED }}>
-            What to do next.
-          </p>
-          <div className="rounded-2xl border border-[#c3c8c1]/30 bg-white/80 px-1 sm:px-2">
+          <div className="mb-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <h2 className="font-serif text-xl font-normal tracking-tight text-[#1f1c18] md:text-2xl">
+              Next actions
+            </h2>
+            <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-[#7a7269]">
+              Pending tasks
+            </span>
+          </div>
+          <div className="divide-y divide-[#e5e1d8] rounded-2xl border border-[#e5e1d8] bg-white">
             {[
               {
                 href: '/study-plan',
                 title: `Complete week ${plan.currentWeekNumber}`,
-                sub: 'Parts still open in your plan',
+                sub: 'Open your plan and finish the next part.',
+                Icon: CheckCircle2,
               },
               {
                 href: '/error-log',
-                title: 'Review errors',
-                sub: 'Due for spaced review',
+                title: 'Review recent mistakes',
+                sub: 'Spaced review for errors due today.',
+                Icon: FileText,
               },
               {
                 href: '/coach',
-                title: 'Ask the coach',
-                sub: 'Step-by-step quant help',
+                title: 'Ask the quant coach',
+                sub: 'Step-by-step help on a stuck topic.',
+                Icon: Play,
               },
-            ].map((row, i) => (
+            ].map((row) => (
               <Link
                 key={row.href}
                 href={row.href}
-                className={cn(
-                  'flex items-center justify-between gap-4 border-[#c3c8c1]/30 py-5 pl-3 pr-2 transition-colors hover:bg-[#fbf9f4]/80 sm:pl-4',
-                  i > 0 && 'border-t'
-                )}
+                className="flex items-center gap-4 px-4 py-4 transition-colors hover:bg-[#faf9f6] sm:px-5 sm:py-4"
               >
-                <div>
-                  <p className="font-medium" style={{ color: STITCH_INK }}>
-                    {row.title}
-                  </p>
-                  <p className="mt-0.5 text-sm" style={{ color: STITCH_MUTED }}>
-                    {row.sub}
-                  </p>
+                <div
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#e5e1d8] bg-[#f9f8f3] text-[#4a5d4e]"
+                  aria-hidden
+                >
+                  <row.Icon className="h-4 w-4" />
                 </div>
-                <ArrowRight className="h-5 w-5 shrink-0 opacity-50" style={{ color: STITCH_INK }} aria-hidden />
+                <div className="min-w-0 flex-1">
+                  <p className="font-sans text-sm font-semibold text-[#1f1c18]">{row.title}</p>
+                  <p className="mt-0.5 text-sm leading-snug text-[#5c564f]">{row.sub}</p>
+                </div>
+                <ArrowRight className="h-4 w-4 shrink-0 text-[#a39a8f]" aria-hidden />
               </Link>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Stat row — Stitch: four #f5f3ee tiles */}
-      <div className="mb-12 grid grid-cols-2 gap-4 lg:mb-16 lg:grid-cols-4 lg:gap-5">
+      {/* Four white stat cards — stronger contrast on cream */}
+      <div className="mb-10 grid grid-cols-2 gap-3 sm:gap-4 lg:mb-14 lg:grid-cols-4">
         {[
           {
-            eyebrow: 'This week',
-            value: `${Math.round(progressPercent)}%`,
-            sub: 'Current module',
+            eyebrow: 'Questions solved',
+            value: Math.max(questionsApprox, 0).toLocaleString('en-US'),
+            sub: isOnTrack ? 'On pace this week' : 'Add a review block',
           },
           {
             eyebrow: 'Accuracy',
@@ -349,9 +388,9 @@ export default function Dashboard() {
             sub: 'Across topics',
           },
           {
-            eyebrow: 'Topics',
-            value: `${masteredCount}`,
-            sub: `of ${mockTopicMastery.length} mastered`,
+            eyebrow: 'Completion',
+            value: `${Math.round(progressPercent)}%`,
+            sub: 'This module',
           },
           {
             eyebrow: 'Vocabulary',
@@ -359,90 +398,59 @@ export default function Dashboard() {
             sub: `${mockDailyCheckIns.slice(0, 7).reduce((s, c) => s + c.wordsLearned, 0)} this week`,
           },
         ].map((stat) => (
-          <div key={stat.eyebrow} className="rounded-2xl bg-[#f5f3ee] px-5 py-5 sm:px-6 sm:py-6">
-            <p
-              className="text-[10px] font-semibold uppercase tracking-[0.2em]"
-              style={{ color: STITCH_MUTED }}
-            >
+          <div
+            key={stat.eyebrow}
+            className="rounded-xl border border-[#e8e4dc] bg-white px-4 py-4 shadow-sm sm:px-5 sm:py-5"
+          >
+            <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7a7269]">
               {stat.eyebrow}
             </p>
-            <p
-              className="mt-3 font-serif text-3xl font-normal tabular-nums tracking-tight sm:text-4xl"
-              style={{ color: STITCH_INK }}
-            >
+            <p className="mt-1.5 font-serif text-2xl font-normal tabular-nums tracking-tight text-[#1f1c18] sm:text-3xl">
               {stat.value}
             </p>
-            <p className="mt-1 text-xs" style={{ color: STITCH_MUTED }}>
-              {stat.sub}
-            </p>
+            <p className="mt-1 font-sans text-xs leading-tight text-[#5c564f]">{stat.sub}</p>
           </div>
         ))}
       </div>
 
-      {/* Footer band — overall + domain bars */}
-      <section
-        className="-mx-4 rounded-2xl bg-[#f5f3ee] px-4 py-10 sm:-mx-8 sm:px-8 lg:-mx-12 lg:px-12 lg:py-12"
-      >
-        <h2
-          className="mb-2 font-serif text-xl font-normal tracking-tight md:text-2xl"
-          style={{ color: STITCH_INK }}
-        >
-          Overall progress
+      <section className="-mx-4 rounded-2xl border border-[#e5e1d8] bg-[#f3f1eb] px-4 py-8 sm:-mx-8 sm:px-8 lg:-mx-12 lg:px-10 lg:py-10">
+        <h2 className="font-serif text-xl font-normal tracking-tight text-[#1f1c18] md:text-2xl">
+          By domain
         </h2>
-        <p className="mb-6 text-sm" style={{ color: STITCH_MUTED }}>
-          Average accuracy across all quant topics you&apos;ve practiced.
+        <p className="mt-1 max-w-xl text-sm text-[#5c564f]">
+          Average accuracy where you&apos;ve practiced — use it to decide what to review next.
         </p>
-        <div className="mb-8">
-          <div className="mb-2 flex justify-between text-xs font-medium" style={{ color: STITCH_MUTED }}>
-            <span>Blended score</span>
-            <span className="tabular-nums" style={{ color: STITCH_PRIMARY }}>
-              {avgAll}%
-            </span>
-          </div>
-          <div className="h-3 w-full overflow-hidden rounded-full bg-white" style={{ boxShadow: `inset 0 0 0 1px ${STITCH_TRACK}` }}>
-            <div
-              className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${avgAll}%`, backgroundColor: STITCH_PRIMARY }}
-            />
-          </div>
-        </div>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {categoryBars.map((cat) => (
-            <div key={cat.label}>
-              <div className="mb-2 flex justify-between text-xs" style={{ color: STITCH_MUTED }}>
-                <span>{cat.label}</span>
-                <span className="tabular-nums font-medium" style={{ color: STITCH_INK }}>
-                  {cat.pct}%
-                </span>
+            <div key={cat.label} className="rounded-xl border border-[#e5e1d8] bg-white px-3 py-3">
+              <div className="flex items-center justify-between text-xs text-[#5c564f]">
+                <span className="font-medium text-[#1f1c18]">{cat.label}</span>
+                <span className="tabular-nums font-semibold text-[#1f1c18]">{cat.pct}%</span>
               </div>
-              <div className="h-2 overflow-hidden rounded-full bg-white/90">
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#ebe7df]">
                 <div
                   className="h-full rounded-full"
-                  style={{ width: `${cat.pct}%`, backgroundColor: STITCH_PRIMARY }}
+                  style={{ width: `${cat.pct}%`, backgroundColor: ACCENT }}
                 />
               </div>
             </div>
           ))}
         </div>
-        <div className="mt-8 flex flex-wrap gap-3 text-xs" style={{ color: STITCH_MUTED }}>
-          <span className="tabular-nums">{daysSinceStarted} days studying</span>
-          <span aria-hidden>·</span>
+        <p className="mt-6 text-xs text-[#5c564f]">
+          <span className="tabular-nums">{daysSinceStarted}</span> days studying
+          <span className="mx-2 text-[#c4bdb4]">·</span>
           <span className="tabular-nums" suppressHydrationWarning>
             {isClient && plan.targetGREDate
-              ? `${daysRemaining} days to test (${plan.targetGREDate.toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                })})`
-              : 'Set your test date in onboarding'}
+              ? `${daysRemaining} days to test`
+              : 'Set your test date in settings'}
           </span>
-        </div>
-        <Link href="/topic-mastery" className="mt-6 inline-block">
+        </p>
+        <Link href="/topic-mastery" className="mt-5 inline-block">
           <Button
             variant="outline"
-            className="border-[#c3c8c1]/50 bg-white text-xs font-semibold uppercase tracking-widest"
-            style={{ color: STITCH_INK }}
+            className="border-[#d0cbc2] bg-white text-xs font-semibold uppercase tracking-widest text-[#1f1c18]"
           >
-            Detailed topic report
+            Topic report
           </Button>
         </Link>
       </section>

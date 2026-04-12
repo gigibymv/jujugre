@@ -8,6 +8,7 @@ import { CoachMessageBody } from '@/components/coach-message-body';
 import { PageShell } from '@/components/page-shell';
 import { ContentHeader } from '@/components/content-header';
 import { mockCoachMessages } from '@/lib/mock-data';
+import { consumeCoachNdjsonStream } from '@/lib/coach-client-stream';
 import { useState } from 'react';
 import {
   Send,
@@ -38,6 +39,8 @@ export default function CoachPage() {
     setIsLoading(true);
     setStreamBuffer(null);
 
+    const preferStream = process.env.NEXT_PUBLIC_COACH_USE_STREAM !== 'false';
+
     try {
       const apiMessages = nextThread.map((m) => ({
         role: m.role === 'coach' ? ('assistant' as const) : ('user' as const),
@@ -47,53 +50,48 @@ export default function CoachPage() {
       const res = await fetch('/api/coach', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: apiMessages, stream: true }),
+        body: JSON.stringify({ messages: apiMessages, stream: preferStream }),
+        cache: 'no-store',
       });
 
-      const ct = res.headers.get('content-type') || '';
+      const ct = (res.headers.get('content-type') || '').toLowerCase();
 
-      if (ct.includes('ndjson') && res.body) {
+      if (preferStream && ct.includes('ndjson') && res.body) {
         setStreamBuffer('');
-        const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
-        let buf = '';
         let full = '';
         let protocolCompliant = true;
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buf += value;
-          const lines = buf.split('\n');
-          buf = lines.pop() ?? '';
-          for (const line of lines) {
-            const t = line.trim();
-            if (!t) continue;
-            try {
-              const o = JSON.parse(t) as {
-                c?: string;
-                replace?: string;
-                done?: boolean;
-                protocolCompliant?: boolean;
-                error?: string;
-              };
-              if (o.error) throw new Error(o.error);
-              if (typeof o.replace === 'string') {
-                full = o.replace;
-                setStreamBuffer(full);
-              }
-              if (typeof o.c === 'string') {
-                full += o.c;
-                setStreamBuffer(full);
-              }
-              if (o.done) {
-                if (typeof o.protocolCompliant === 'boolean') {
-                  protocolCompliant = o.protocolCompliant;
-                }
-              }
-            } catch (e) {
-              if (e instanceof SyntaxError) continue;
-              throw e;
+        try {
+          await consumeCoachNdjsonStream(res.body, (o) => {
+            if (o.error) throw new Error(o.error);
+            if (typeof o.replace === 'string') {
+              full = o.replace;
+              setStreamBuffer(full);
             }
-          }
+            if (typeof o.c === 'string') {
+              full += o.c;
+              setStreamBuffer(full);
+            }
+            if (o.done && typeof o.protocolCompliant === 'boolean') {
+              protocolCompliant = o.protocolCompliant;
+            }
+          });
+        } catch (streamErr) {
+          console.error('[jujugre] coach stream:', streamErr);
+          setStreamBuffer(null);
+          const fallback =
+            mockCoachMessages[0]?.coachResponse ||
+            'The reply was interrupted. Try again. If this keeps happening on Vercel Hobby (10s limit), upgrade the plan or set NEXT_PUBLIC_COACH_USE_STREAM=false in .env.local.';
+          setMessages((prev) => [
+            ...prev,
+            { role: 'coach', content: fallback, protocolCompliant: true },
+          ]);
+          return;
+        }
+
+        if (!res.ok) {
+          full =
+            full.trim() ||
+            `The coach request failed (${res.status}). You can try again in a moment.`;
         }
 
         const text =
@@ -109,6 +107,24 @@ export default function CoachPage() {
       }
 
       setStreamBuffer(null);
+      if (!res.ok) {
+        let detail = '';
+        try {
+          const errBody = (await res.json()) as { error?: string };
+          if (errBody.error) detail = errBody.error;
+        } catch {
+          /* non-JSON error body */
+        }
+        const text =
+          detail ||
+          `Request failed (${res.status}). The coach may be temporarily unavailable.`;
+        setMessages((prev) => [
+          ...prev,
+          { role: 'coach', content: text, protocolCompliant: true },
+        ]);
+        return;
+      }
+
       const data = (await res.json()) as {
         content?: string;
         protocolCompliant?: boolean;
@@ -122,7 +138,8 @@ export default function CoachPage() {
         { role: 'coach', content: text, protocolCompliant: data.protocolCompliant ?? true },
       ]);
       setStreamBuffer(null);
-    } catch {
+    } catch (err) {
+      console.error('[jujugre] coach client:', err);
       const fallback =
         mockCoachMessages[0]?.coachResponse ||
         'Network error. Check your connection and try again.';
@@ -285,10 +302,13 @@ export default function CoachPage() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="coach-bubble-assistant">
-                          <CoachMessageBody
-                            content={streamBuffer || '…'}
-                            className="text-sm leading-relaxed text-foreground"
-                          />
+                          {/*
+                            Plain text while streaming — ReactMarkdown + KaTeX can throw on partial
+                            LaTeX (e.g. unclosed $...$), which looked like a broken coach.
+                          */}
+                          <div className="whitespace-pre-wrap break-words text-sm leading-relaxed text-foreground">
+                            {streamBuffer || '…'}
+                          </div>
                           {isLoading && (
                             <p className="mt-2 text-xs text-muted-foreground">Streaming answer…</p>
                           )}

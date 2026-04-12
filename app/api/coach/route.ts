@@ -17,6 +17,9 @@ const NVIDIA_CHAT_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
 /** Vercel: allow slow GPU responses (Pro plan allows up to 60s; Hobby max is 10s). */
 export const maxDuration = 60;
 
+/** Node required for upstream fetch streaming + long-running completions. */
+export const runtime = 'nodejs';
+
 function stripThinkingBlocks(text: string): string {
   return text
     .replace(/<redacted_thinking>[\s\S]*?<\/think>/gi, '')
@@ -71,6 +74,20 @@ function ndjsonResponse(stream: ReadableStream<Uint8Array>) {
   });
 }
 
+function ndjsonFromFallback(fb: { content: string; protocolCompliant: boolean }) {
+  const enc = new TextEncoder();
+  return new ReadableStream<Uint8Array>({
+    start(c) {
+      c.enqueue(
+        enc.encode(
+          `${JSON.stringify({ c: fb.content })}\n${JSON.stringify({ done: true, protocolCompliant: fb.protocolCompliant })}\n`
+        )
+      );
+      c.close();
+    },
+  });
+}
+
 function buildNdjsonStream(upstreamBody: ReadableStream<Uint8Array> | null): ReadableStream<Uint8Array> {
   const enc = new TextEncoder();
   return new ReadableStream({
@@ -99,10 +116,17 @@ function buildNdjsonStream(upstreamBody: ReadableStream<Uint8Array> | null): Rea
 }
 
 export async function POST(request: Request) {
+  let wantStream = false;
   try {
-    const body = await request.json();
+    let body: { messages?: ChatMessage[]; stream?: boolean };
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+
     const messages = body?.messages as ChatMessage[] | undefined;
-    const wantStream = body?.stream === true;
+    wantStream = body?.stream === true;
     if (!Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json({ error: 'messages required' }, { status: 400 });
     }
@@ -151,18 +175,7 @@ export async function POST(request: Request) {
         console.error('[jujugre] NVIDIA API error:', res.status, errText);
         const fb = fallbackReply(userText);
         if (wantStream) {
-          const enc = new TextEncoder();
-          const s = new ReadableStream({
-            start(c) {
-              c.enqueue(
-                enc.encode(
-                  `${JSON.stringify({ c: fb.content })}\n${JSON.stringify({ done: true, protocolCompliant: fb.protocolCompliant })}\n`
-                )
-              );
-              c.close();
-            },
-          });
-          return ndjsonResponse(s);
+          return ndjsonResponse(ndjsonFromFallback(fb));
         }
         return NextResponse.json(fb);
       }
@@ -190,18 +203,7 @@ export async function POST(request: Request) {
     if (!openaiKey) {
       const fb = fallbackReply(userText);
       if (wantStream) {
-        const enc = new TextEncoder();
-        const s = new ReadableStream({
-          start(c) {
-            c.enqueue(
-              enc.encode(
-                `${JSON.stringify({ c: fb.content })}\n${JSON.stringify({ done: true, protocolCompliant: fb.protocolCompliant })}\n`
-              )
-            );
-            c.close();
-          },
-        });
-        return ndjsonResponse(s);
+        return ndjsonResponse(ndjsonFromFallback(fb));
       }
       return NextResponse.json(fb);
     }
@@ -230,18 +232,7 @@ export async function POST(request: Request) {
       console.error('[jujugre] OpenAI error:', res.status, errText);
       const fb = fallbackReply(userText);
       if (wantStream) {
-        const enc = new TextEncoder();
-        const s = new ReadableStream({
-          start(c) {
-            c.enqueue(
-              enc.encode(
-                `${JSON.stringify({ c: fb.content })}\n${JSON.stringify({ done: true, protocolCompliant: fb.protocolCompliant })}\n`
-              )
-            );
-            c.close();
-          },
-        });
-        return ndjsonResponse(s);
+        return ndjsonResponse(ndjsonFromFallback(fb));
       }
       return NextResponse.json(fb);
     }
@@ -263,6 +254,9 @@ export async function POST(request: Request) {
   } catch (e) {
     console.error('[jujugre] coach API:', e);
     const fb = fallbackReply('');
+    if (wantStream) {
+      return ndjsonResponse(ndjsonFromFallback(fb));
+    }
     return NextResponse.json(fb);
   }
 }

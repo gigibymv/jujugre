@@ -19,7 +19,7 @@ export function PageShell({
   if (variant === 'canvas') {
     return (
       <div
-        className={cn('min-h-[calc(100dvh-7rem)] bg-[#fbf9f4]', className)}
+        className={cn('min-h-[calc(100dvh-7rem)] bg-[#f9f8f3]', className)}
       >
         <div
           className={cn(

@@ -1,5 +1,7 @@
 'use client';
 
+import { ErrorBoundary } from '@/components/error-boundary';
+import { cn } from '@/lib/utils';
 import type { Components } from 'react-markdown';
 import ReactMarkdown from 'react-markdown';
 import rehypeKatex from 'rehype-katex';
@@ -81,7 +83,7 @@ type CoachMessageBodyProps = {
   className?: string;
 };
 
-export function CoachMessageBody({ content, className }: CoachMessageBodyProps) {
+function CoachMarkdown({ content, className }: CoachMessageBodyProps) {
   return (
     <div className={className}>
       <ReactMarkdown
@@ -92,5 +94,20 @@ export function CoachMessageBody({ content, className }: CoachMessageBodyProps) 
         {content}
       </ReactMarkdown>
     </div>
+  );
+}
+
+/**
+ * Markdown + math for coach replies. Wrapped so a rehype/remark edge case cannot
+ * take down the whole chat (ErrorBoundary at app root would otherwise trigger).
+ */
+export function CoachMessageBody({ content, className }: CoachMessageBodyProps) {
+  const fallback = (
+    <div className={cn(className, 'whitespace-pre-wrap break-words')}>{content}</div>
+  );
+  return (
+    <ErrorBoundary key={content.slice(0, 200)} fallback={fallback}>
+      <CoachMarkdown content={content} className={className} />
+    </ErrorBoundary>
   );
 }

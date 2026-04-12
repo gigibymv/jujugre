@@ -72,7 +72,7 @@ export default function AppNav() {
 
   return (
     <header
-      className="fixed top-0 z-50 w-full border-b border-[#e4e2dd]/40 bg-[#fbf9f4] shadow-[0_4px_24px_-4px_rgba(42,37,32,0.04)]"
+      className="fixed top-0 z-50 w-full border-b border-[#e4e2dd]/40 bg-[#f9f8f3] shadow-[0_4px_24px_-4px_rgba(31,28,24,0.05)]"
     >
       <div className="mx-auto flex h-16 max-w-screen-2xl items-center justify-between gap-3 px-4 sm:gap-6 sm:px-8 lg:px-12">
         <Link
@@ -108,7 +108,7 @@ export default function AppNav() {
             href={sessionHref}
             className={cn(
               'hidden rounded-lg px-4 py-2 text-xs font-medium uppercase tracking-widest text-white transition-transform active:scale-95 sm:inline-flex sm:items-center sm:justify-center',
-              sessionActive && 'ring-2 ring-[#4e6053]/30 ring-offset-2 ring-offset-[#fbf9f4]'
+              sessionActive && 'ring-2 ring-[#4e6053]/30 ring-offset-2 ring-offset-[#f9f8f3]'
             )}
             style={{ backgroundColor: STITCH_PRIMARY }}
             onMouseEnter={(e) => {
@@ -138,7 +138,7 @@ export default function AppNav() {
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="border-[#e4e2dd] bg-[#fbf9f4] text-[#2a2520]">
+            <SheetContent side="right" className="border-[#e4e2dd] bg-[#f9f8f3] text-[#2a2520]">
               <SheetHeader>
                 <SheetTitle className="font-serif text-[#2a2520]">Menu</SheetTitle>
               </SheetHeader>

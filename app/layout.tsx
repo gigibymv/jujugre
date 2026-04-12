@@ -24,9 +24,9 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="min-h-dvh bg-[#f9f8f3]">
       <body
-        className={`${newsreader.variable} font-sans antialiased`}
+        className={`${newsreader.variable} min-h-dvh bg-[#f9f8f3] font-sans antialiased`}
       >
         <AppProviders>{children}</AppProviders>
       </body>

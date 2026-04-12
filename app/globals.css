@@ -10,7 +10,7 @@
   --app-background-image: url('/app-background.png');
 
   /* Material-style surface stack (cream canvas → nested off-white → lifted white cards) */
-  --surface-canvas: #fbf9f4;
+  --surface-canvas: #f9f8f3;
   --surface-paper: #ffffff;
   --surface-raised: #ffffff;
   --surface-nest: #f5f3ee;
@@ -184,7 +184,7 @@
   body {
     @apply text-foreground antialiased;
     font-feature-settings: 'kern' 1, 'liga' 1;
-    background-color: #fbf9f4;
+    background-color: #f9f8f3;
     background-image: var(--app-background-image);
     background-position: center;
     background-size: cover;
