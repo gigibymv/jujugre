@@ -2,19 +2,37 @@ import { cn } from '@/lib/utils';
 import type { ReactNode } from 'react';
 
 /**
- * Full-width “canvas” (muted) + inner “paper” (card background) so layout reads clearly
- * against the nav and standalone cards on the page.
+ * - `paper`: inner “sheet” on cream canvas (study plan, settings, …)
+ * - `canvas`: full-width on cream only — matches Stitch dashboard export (no white frame)
  */
 export function PageShell({
   children,
   className,
   narrow,
+  variant = 'paper',
 }: {
   children: ReactNode;
   className?: string;
-  /** Use max-w-3xl for coach / focused flows */
   narrow?: boolean;
+  variant?: 'paper' | 'canvas';
 }) {
+  if (variant === 'canvas') {
+    return (
+      <div
+        className={cn('min-h-[calc(100dvh-7rem)] bg-[#fbf9f4]', className)}
+      >
+        <div
+          className={cn(
+            'mx-auto w-full max-w-screen-2xl px-4 pb-16 sm:px-8 lg:px-12 lg:pb-20',
+            narrow && 'max-w-3xl'
+          )}
+        >
+          {children}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(
