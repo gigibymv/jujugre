@@ -96,6 +96,8 @@ export type ErrorCategory =
   | "boundary_error"
   | "estimation_precision";
 
+export type DrillOutcome = "struggled" | "partial" | "mastered";
+
 export type Difficulty = "easy" | "medium" | "hard";
 
 export type MasteryLevel = 
@@ -172,6 +174,10 @@ export interface ErrorLogEntry {
   createdAt: Date;
   reviewDueDate: Date;
   reviewed: boolean;
+  confidence?: 1 | 2 | 3 | 4 | 5;
+  lastOutcome?: DrillOutcome;
+  nextAction?: string;
+  lastFeedbackAt?: Date;
 }
 
 export interface SourceMaterial {

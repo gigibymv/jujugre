@@ -9,7 +9,10 @@ import { PageShell } from '@/components/page-shell';
 import { ContentHeader } from '@/components/content-header';
 import { COACH_CLIENT_FALLBACK } from '@/lib/coach-client-copy';
 import { consumeCoachNdjsonStream } from '@/lib/coach-client-stream';
-import { useState } from 'react';
+import { buildCoachPromptFromError } from '@/lib/error-drills';
+import { getErrorLogEntryById, setErrorLogEntryCoachFeedback } from '@/lib/error-log-storage';
+import { Suspense, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   Send,
   Sparkles,
@@ -20,7 +23,8 @@ import {
   Loader2,
 } from 'lucide-react';
 
-export default function CoachPage() {
+function CoachPageInner() {
+  const searchParams = useSearchParams();
   const [messages, setMessages] = useState<
     Array<{ role: 'user' | 'coach'; content: string; protocolCompliant?: boolean }>
   >([]);
@@ -28,6 +32,30 @@ export default function CoachPage() {
   const [isLoading, setIsLoading] = useState(false);
   /** In-flight streamed coach text (null = not streaming) */
   const [streamBuffer, setStreamBuffer] = useState<string | null>(null);
+  const [savedToErrorLog, setSavedToErrorLog] = useState(false);
+  const linkedErrorId = searchParams.get('fromError');
+
+  useEffect(() => {
+    const fromError = searchParams.get('fromError');
+    if (!fromError || messages.length > 0) return;
+    const entry = getErrorLogEntryById(fromError);
+    if (!entry) return;
+    setInput((prev) => (prev.trim() ? prev : buildCoachPromptFromError(entry)));
+  }, [searchParams, messages.length]);
+
+  const latestCoachMessage = [...messages].reverse().find((m) => m.role === 'coach')?.content ?? '';
+
+  useEffect(() => {
+    if (latestCoachMessage) {
+      setSavedToErrorLog(false);
+    }
+  }, [latestCoachMessage]);
+
+  const applyCoachFeedback = () => {
+    if (!linkedErrorId || !latestCoachMessage.trim()) return;
+    setErrorLogEntryCoachFeedback(linkedErrorId, latestCoachMessage);
+    setSavedToErrorLog(true);
+  };
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -354,6 +382,19 @@ export default function CoachPage() {
                     );
                   })}
                 </div>
+                {linkedErrorId && (
+                  <div className="mt-3">
+                    <Button
+                      variant={savedToErrorLog ? 'secondary' : 'default'}
+                      size="sm"
+                      onClick={applyCoachFeedback}
+                      disabled={!latestCoachMessage.trim() || savedToErrorLog}
+                      className="text-xs"
+                    >
+                      {savedToErrorLog ? 'Feedback saved to error log' : 'Apply feedback to this error'}
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -408,5 +449,22 @@ export default function CoachPage() {
         </CardContent>
       </Card>
     </PageShell>
+  );
+}
+
+export default function CoachPage() {
+  return (
+    <Suspense
+      fallback={
+        <PageShell narrow>
+          <ContentHeader eyebrow="Coach" title="Quant coach" description="Loading…" />
+          <Card className="flex h-[min(32rem,70vh)] items-center justify-center sm:h-[36rem]">
+            <CardContent className="text-sm text-muted-foreground">Loading coach…</CardContent>
+          </Card>
+        </PageShell>
+      }
+    >
+      <CoachPageInner />
+    </Suspense>
   );
 }
