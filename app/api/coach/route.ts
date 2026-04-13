@@ -208,15 +208,18 @@ export async function POST(request: Request) {
     ];
 
     const defaultMax = verboseCoach ? 3072 : 1024;
+    /** OpenRouter default when env unset: shorter = faster; verbose keeps up to 1024. */
+    const openRouterDefaultMax = verboseCoach ? Math.min(defaultMax, 1024) : 640;
     const upstreamStream = useUpstreamSse(wantStream);
     const upstreamSignal = upstreamAbortSignal();
 
     const openRouterKey = process.env.OPENROUTER_API_KEY?.trim();
     if (openRouterKey) {
       const orMax = Number(
-        process.env.OPENROUTER_MAX_TOKENS || String(Math.min(defaultMax, 1024))
+        process.env.OPENROUTER_MAX_TOKENS || String(openRouterDefaultMax)
       );
-      const maxTokens = Number.isFinite(orMax) && orMax > 0 ? orMax : Math.min(defaultMax, 1024);
+      const maxTokens =
+        Number.isFinite(orMax) && orMax > 0 ? orMax : openRouterDefaultMax;
       const referer =
         process.env.OPENROUTER_HTTP_REFERER?.trim() ||
         (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');

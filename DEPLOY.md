@@ -20,6 +20,8 @@
 | Name | Value | Environnements |
 |------|--------|----------------|
 | `OPENROUTER_API_KEY` | clé [openrouter.ai/keys](https://openrouter.ai/keys) | Production, Preview |
+| `NEXT_PUBLIC_COACH_USE_STREAM` | `true` | Production, Preview (rebuild) — réponses qui s’affichent au fil du texte |
+| `OPENROUTER_MAX_TOKENS` | `640` (ou 512–768) | (optionnel) réponses plus courtes / souvent plus rapides |
 | `NVIDIA_API_KEY` | (optionnel) ta clé `nvapi-...` | Production, Preview |
 | `NVIDIA_MODEL` | `google/gemma-4-31b-it` | (optionnel) |
 | `NVIDIA_MAX_TOKENS` | `3072` | (optionnel, limite la longueur = moins lent) |
@@ -27,7 +29,7 @@
 
 Optionnel : `OPENAI_API_KEY` si tu veux un repli OpenAI sans NVIDIA.
 
-**Latence coach :** Gemma 31B via NVIDIA peut prendre **10–40 s**. Sur Vercel **Hobby**, la fonction coupe à **10 s**. L’app **coupe l’appel amont** vers ~8,2 s (`COACH_UPSTREAM_TIMEOUT_MS`) et renvoie un **texte de secours** structuré plutôt qu’une erreur vide. Pour des vraies réponses LLM longues : **Vercel Pro** (jusqu’à **60 s** avec `maxDuration`) ou **modèle / `NVIDIA_MAX_TOKENS` plus petits**. Sur Vercel, le coach utilise le **JSON** côté client par défaut (pas le streaming) pour plus de fiabilité ; le streaming amont SSE est désactivé sauf `COACH_VERCEL_ALLOW_UPSTREAM_SSE=true`.
+**Latence coach :** Gemma 31B via NVIDIA peut prendre **10–40 s**. Sur Vercel **Hobby**, la fonction coupe à **10 s**. L’app **coupe l’appel amont** vers ~8,2 s (`COACH_UPSTREAM_TIMEOUT_MS`) et renvoie un **texte de secours** structuré plutôt qu’une erreur vide. Pour des vraies réponses LLM longues : **Vercel Pro** (jusqu’à **60 s** avec `maxDuration`) ou **modèle / `NVIDIA_MAX_TOKENS` / `OPENROUTER_MAX_TOKENS` plus petits**. Avec `NEXT_PUBLIC_COACH_USE_STREAM=true`, l’UI affiche le texte au fil de l’eau (meilleur ressenti) ; sur Vercel, le **SSE amont** reste désactivé par défaut (`COACH_VERCEL_ALLOW_UPSTREAM_SSE`) — l’API peut quand même renvoyer du NDJSON pour le client.
 
 7. Clique **Deploy**. À la fin, ouvre l’URL `*.vercel.app` : teste **Coach** et l’onboarding.
 
