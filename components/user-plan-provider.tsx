@@ -12,7 +12,12 @@ import {
   savePersistedState,
   type PersistedUserStateV1,
 } from '@/lib/user-state';
-import type { StudyPlan, UserProfile } from '@/lib/data-schema';
+import {
+  createEmptyUserAnalyticsState,
+  loadPersistedAnalytics,
+  type UserAnalyticsState,
+} from '@/lib/user-analytics';
+import type { DailyCheckIn, ErrorLogEntry, StudyPlan, TopicMastery, UserProfile } from '@/lib/data-schema';
 import {
   createContext,
   useCallback,
@@ -29,6 +34,9 @@ type UserPlanContextValue = {
   persisted: PersistedUserStateV1 | null;
   user: UserProfile;
   studyPlan: StudyPlan;
+  topicMastery: TopicMastery[];
+  dailyCheckIns: DailyCheckIn[];
+  errorLogEntries: ErrorLogEntry[];
   hasCompletedOnboarding: boolean;
   completeOnboarding: (input: {
     targetGREDate: string;
@@ -51,10 +59,14 @@ const UserPlanContext = createContext<UserPlanContextValue | null>(null);
 
 export function UserPlanProvider({ children }: { children: ReactNode }) {
   const [persisted, setPersisted] = useState<PersistedUserStateV1 | null>(null);
+  const [analytics, setAnalytics] = useState<UserAnalyticsState>(
+    createEmptyUserAnalyticsState
+  );
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     setPersisted(loadPersistedState());
+    setAnalytics(loadPersistedAnalytics());
     setHydrated(true);
   }, []);
 
@@ -65,6 +77,7 @@ export function UserPlanProvider({ children }: { children: ReactNode }) {
       if (event.storageArea !== window.localStorage) return;
       if (event.key !== null && !isUserStorageKey(event.key)) return;
       setPersisted(loadPersistedState());
+      setAnalytics(loadPersistedAnalytics());
     };
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);
@@ -141,6 +154,7 @@ export function UserPlanProvider({ children }: { children: ReactNode }) {
   const resetLocalState = useCallback(() => {
     clearPersistedState();
     setPersisted(null);
+    setAnalytics(createEmptyUserAnalyticsState());
   }, []);
 
   const value = useMemo(
@@ -149,6 +163,9 @@ export function UserPlanProvider({ children }: { children: ReactNode }) {
       persisted,
       user,
       studyPlan,
+      topicMastery: analytics.topicMastery,
+      dailyCheckIns: analytics.dailyCheckIns,
+      errorLogEntries: analytics.errorLogEntries,
       hasCompletedOnboarding: Boolean(persisted?.onboardingCompletedAt),
       completeOnboarding,
       setTaskCompleted,
@@ -161,6 +178,9 @@ export function UserPlanProvider({ children }: { children: ReactNode }) {
       persisted,
       user,
       studyPlan,
+      analytics.topicMastery,
+      analytics.dailyCheckIns,
+      analytics.errorLogEntries,
       completeOnboarding,
       setTaskCompleted,
       clearStudyProgress,

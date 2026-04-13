@@ -11,26 +11,11 @@ import { CheckCircle2, AlertCircle, Clock, Zap, BookOpen } from 'lucide-react';
 import { useState } from 'react';
 
 export default function ErrorLogPage() {
-  const { hasCompletedOnboarding } = useUserPlan();
+  const { hasCompletedOnboarding, errorLogEntries } = useUserPlan();
   const [sortBy, setSortBy] = useState<'review_due' | 'recent' | 'topic'>('review_due');
   const [filterReviewed, setFilterReviewed] = useState<'all' | 'unreviewed' | 'reviewed'>('unreviewed');
-  const errorEntries: Array<{
-    id: string;
-    reviewed: boolean;
-    reviewDueDate: Date;
-    createdAt: Date;
-    topic: string;
-    errorCategory: string;
-    subtopic: string;
-    problem: string;
-    studentAnswer: string;
-    correctAnswer: string;
-    explanation: string;
-    protocolElements: string[];
-    sourceReference: string;
-  }> = [];
 
-  let filtered = errorEntries;
+  let filtered = errorLogEntries;
   if (filterReviewed === 'unreviewed') {
     filtered = filtered.filter((e) => !e.reviewed);
   } else if (filterReviewed === 'reviewed') {
@@ -47,10 +32,10 @@ export default function ErrorLogPage() {
     return a.topic.localeCompare(b.topic);
   });
 
-  const unreviewedCount = errorEntries.filter((e) => !e.reviewed).length;
+  const unreviewedCount = errorLogEntries.filter((e) => !e.reviewed).length;
   const reviewDueNow = sorted.filter((e) => e.reviewDueDate <= new Date()).length;
 
-  const categoryStats = errorEntries.reduce(
+  const categoryStats = errorLogEntries.reduce(
     (acc: Record<string, number>, err) => {
       const cat = err.errorCategory;
       acc[cat] = (acc[cat] ?? 0) + 1;
@@ -77,7 +62,7 @@ export default function ErrorLogPage() {
             <CardTitle className="page-eyebrow">Total errors</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold tabular-nums text-foreground">{errorEntries.length}</div>
+            <div className="text-3xl font-bold tabular-nums text-foreground">{errorLogEntries.length}</div>
           </CardContent>
         </Card>
 
@@ -103,7 +88,7 @@ export default function ErrorLogPage() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold tabular-nums text-accent">
-              {errorEntries.filter((e) => e.reviewed).length}
+              {errorLogEntries.filter((e) => e.reviewed).length}
             </div>
           </CardContent>
         </Card>
@@ -157,7 +142,7 @@ export default function ErrorLogPage() {
             onClick={() => setFilterReviewed('reviewed')}
             className="text-xs"
           >
-            Reviewed ({errorEntries.filter((e) => e.reviewed).length})
+            Reviewed ({errorLogEntries.filter((e) => e.reviewed).length})
           </Button>
           <Button
             variant={filterReviewed === 'all' ? 'default' : 'ghost'}

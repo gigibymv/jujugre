@@ -19,8 +19,8 @@ import {
 } from 'lucide-react';
 
 export default function TopicMasteryPage() {
-  const { hasCompletedOnboarding } = useUserPlan();
-  const topicMasteryData: TopicMastery[] = [];
+  const { hasCompletedOnboarding, topicMastery } = useUserPlan();
+  const topicMasteryData: TopicMastery[] = topicMastery;
   const mastered = topicMasteryData.filter((t) => t.masteryLevel === 'mastered');
   const proficient = topicMasteryData.filter((t) => t.masteryLevel === 'proficient');
   const developing = topicMasteryData.filter((t) => t.masteryLevel === 'developing');

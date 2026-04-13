@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { CoachMessageBody } from '@/components/coach-message-body';
 import { PageShell } from '@/components/page-shell';
 import { ContentHeader } from '@/components/content-header';
-import { mockCoachMessages } from '@/lib/mock-data';
 import { consumeCoachNdjsonStream } from '@/lib/coach-client-stream';
 import { useState } from 'react';
 import {
@@ -19,6 +18,11 @@ import {
   ArrowRight,
   Loader2,
 } from 'lucide-react';
+
+const COACH_CLIENT_FALLBACK =
+  'The assistant is temporarily unavailable. Try again in a moment.';
+const COACH_STREAM_INTERRUPTED_FALLBACK =
+  'The reply was interrupted. Try again. If this keeps happening on Vercel Hobby (10s limit), upgrade the plan or set NEXT_PUBLIC_COACH_USE_STREAM=false in .env.local.';
 
 export default function CoachPage() {
   const [messages, setMessages] = useState<
@@ -98,12 +102,9 @@ export default function CoachPage() {
         } catch (streamErr) {
           console.error('[jujugre] coach stream:', streamErr);
           setStreamBuffer(null);
-          const fallback =
-            mockCoachMessages[0]?.coachResponse ||
-            'The reply was interrupted. Try again. If this keeps happening on Vercel Hobby (10s limit), upgrade the plan or set NEXT_PUBLIC_COACH_USE_STREAM=false in .env.local.';
           setMessages((prev) => [
             ...prev,
-            { role: 'coach', content: fallback, protocolCompliant: true },
+            { role: 'coach', content: COACH_STREAM_INTERRUPTED_FALLBACK, protocolCompliant: true },
           ]);
           return;
         }
@@ -114,10 +115,7 @@ export default function CoachPage() {
             `The coach request failed (${res.status}). You can try again in a moment.`;
         }
 
-        const text =
-          full.trim() ||
-          mockCoachMessages[0]?.coachResponse ||
-          'No response. Try again in a moment.';
+        const text = full.trim() || COACH_CLIENT_FALLBACK;
         setMessages((prev) => [
           ...prev,
           { role: 'coach', content: text, protocolCompliant },
@@ -149,10 +147,7 @@ export default function CoachPage() {
         content?: string;
         protocolCompliant?: boolean;
       };
-      const text =
-        data.content ||
-        mockCoachMessages[0]?.coachResponse ||
-        'No response. Try again in a moment.';
+      const text = data.content || COACH_CLIENT_FALLBACK;
       setMessages((prev) => [
         ...prev,
         { role: 'coach', content: text, protocolCompliant: data.protocolCompliant ?? true },
@@ -160,10 +155,10 @@ export default function CoachPage() {
       setStreamBuffer(null);
     } catch (err) {
       console.error('[jujugre] coach client:', err);
-      const fallback =
-        mockCoachMessages[0]?.coachResponse ||
-        'Network error. Check your connection and try again.';
-      setMessages((prev) => [...prev, { role: 'coach', content: fallback, protocolCompliant: true }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: 'coach', content: 'Network error. Check your connection and try again.', protocolCompliant: true },
+      ]);
       setStreamBuffer(null);
     } finally {
       setIsLoading(false);

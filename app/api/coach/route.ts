@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { mockCoachMessages } from '@/lib/mock-data';
 import { openAIChatDeltaStream } from '@/lib/coach-sse';
 
 type ChatMessage = { role: 'user' | 'assistant' | 'system'; content: string };
@@ -82,22 +81,6 @@ If you share a specific problem or screenshot description, I can tailor each ste
 }
 
 function fallbackReply(userText: string): { content: string; protocolCompliant: boolean } {
-  const lower = userText.toLowerCase().trim();
-  if (lower.length < 4) {
-    return { content: genericFallback(userText), protocolCompliant: true };
-  }
-  const needle = lower.slice(0, 40);
-  const match = mockCoachMessages.find((m) => {
-    const q = m.userQuestion.toLowerCase();
-    const pref = q.slice(0, 30);
-    return (
-      (needle.length >= 4 && q.includes(needle)) ||
-      (pref.length >= 12 && lower.includes(pref))
-    );
-  });
-  if (match) {
-    return { content: match.coachResponse, protocolCompliant: match.protocolCompliant };
-  }
   return { content: genericFallback(userText), protocolCompliant: true };
 }
 

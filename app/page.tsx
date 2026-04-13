@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { PageShell } from '@/components/page-shell';
 import { useUserPlan } from '@/components/user-plan-provider';
+import type { TopicMastery } from '@/lib/data-schema';
 import Link from 'next/link';
 import {
   ArrowRight,
@@ -49,6 +50,14 @@ function getDailyQuote(dateString?: string): (typeof DAILY_QUOTES)[0] {
   return DAILY_QUOTES[hash % DAILY_QUOTES.length];
 }
 
+function avgAccuracy(topics: TopicMastery[], pred: (t: TopicMastery) => boolean): number {
+  const filtered = topics.filter(pred);
+  if (!filtered.length) return 0;
+  return Math.round(
+    filtered.reduce((sum, topic) => sum + topic.practiceAccuracyPercent, 0) / filtered.length
+  );
+}
+
 function iconForTopic(topic: string) {
   if (topic.startsWith('arithmetic_')) return Calculator;
   if (topic.startsWith('algebra_')) return Variable;
@@ -65,7 +74,14 @@ function topicCategoryCaps(topic: string): string {
 }
 
 export default function Dashboard() {
-  const { user, studyPlan: plan, hasCompletedOnboarding, hydrated } = useUserPlan();
+  const {
+    user,
+    studyPlan: plan,
+    topicMastery,
+    dailyCheckIns,
+    hasCompletedOnboarding,
+    hydrated,
+  } = useUserPlan();
   const [isClient, setIsClient] = useState(false);
   const [dailyQuote, setDailyQuote] = useState<(typeof DAILY_QUOTES)[0] | null>(null);
 
@@ -78,14 +94,15 @@ export default function Dashboard() {
   const currentPart = currentModule?.parts.find((p) => p.id === plan.currentPartId);
   const daysRemaining = plan.daysRemaining;
 
-  const hasAnalyticsData = false;
-  const weakAreas: Array<{
-    id: string;
-    topic: string;
-    subtopic: string;
-    practiceAccuracyPercent: number;
-  }> = [];
-  const totalWordsLearned = 0;
+  const hasAnalyticsData = topicMastery.length > 0;
+  const weakAreas = topicMastery
+    .filter((tm) => tm.masteryLevel === 'developing' || tm.masteryLevel === 'not_started')
+    .sort((a, b) => a.practiceAccuracyPercent - b.practiceAccuracyPercent)
+    .slice(0, 3);
+  const totalWordsLearned = dailyCheckIns.reduce((sum, ci) => sum + ci.wordsLearned, 0);
+  const wordsThisWeek = dailyCheckIns
+    .filter((ci) => Date.now() - ci.date.getTime() <= 7 * 24 * 60 * 60 * 1000)
+    .reduce((sum, ci) => sum + ci.wordsLearned, 0);
   const daysSinceStarted = isClient
     ? Math.floor((Date.now() - user.startDate.getTime()) / (1000 * 60 * 60 * 24))
     : 0;
@@ -96,13 +113,22 @@ export default function Dashboard() {
 
   const isOnTrack = plan.latenessState === 'on_track';
 
-  const avgAll = 0;
+  const avgAll =
+    topicMastery.length > 0
+      ? Math.round(
+          topicMastery.reduce((sum, topic) => sum + topic.practiceAccuracyPercent, 0) /
+            topicMastery.length
+        )
+      : 0;
 
   const categoryBars = [
-    { label: 'Arithmetic', pct: 0 },
-    { label: 'Algebra', pct: 0 },
-    { label: 'Geometry', pct: 0 },
-    { label: 'Data analysis', pct: 0 },
+    { label: 'Arithmetic', pct: avgAccuracy(topicMastery, (t) => t.topic.startsWith('arithmetic_')) },
+    { label: 'Algebra', pct: avgAccuracy(topicMastery, (t) => t.topic.startsWith('algebra_')) },
+    { label: 'Geometry', pct: avgAccuracy(topicMastery, (t) => t.topic.startsWith('geometry_')) },
+    {
+      label: 'Data analysis',
+      pct: avgAccuracy(topicMastery, (t) => t.topic.startsWith('data_analysis_')),
+    },
   ];
 
   const weekLabel = `Week ${plan.currentWeekNumber} of 12`;
@@ -378,7 +404,7 @@ export default function Dashboard() {
           {
             eyebrow: 'Vocabulary',
             value: isClient ? String(totalWordsLearned) : '—',
-            sub: '0 this week',
+            sub: `${wordsThisWeek} this week`,
           },
         ].map((stat) => (
           <div
