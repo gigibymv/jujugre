@@ -67,6 +67,13 @@ export default function ErrorLogPage() {
   const topProblematicCategory = Object.entries(categoryStats).sort((a, b) => b[1] - a[1])[0] as
     | [string, number]
     | undefined;
+  const categoryDistribution = Object.entries(categoryStats)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+  const topCategorySharePct =
+    errorLogEntries.length > 0 && topProblematicCategory
+      ? Math.round((topProblematicCategory[1] / errorLogEntries.length) * 100)
+      : 0;
 
   const handleScreenshotSelect = async (file: File | null) => {
     if (!file) return;
@@ -425,6 +432,51 @@ export default function ErrorLogPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="mb-page-block">
+        <CardHeader>
+          <CardTitle className="text-base font-semibold text-foreground">Error type dashboard</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {categoryDistribution.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Add a few errors to see which categories occur most often.
+            </p>
+          ) : (
+            <>
+              <div className="rounded-lg border border-border bg-muted/20 p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Most frequent type
+                </p>
+                <p className="mt-1 text-base font-semibold text-foreground">
+                  {topProblematicCategory ? topProblematicCategory[0].replace(/_/g, ' ') : 'N/A'}
+                </p>
+                {topProblematicCategory && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {topProblematicCategory[1]} of {errorLogEntries.length} errors ({topCategorySharePct}%)
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                {categoryDistribution.map(([category, count]) => {
+                  const pct = Math.max(4, Math.round((count / errorLogEntries.length) * 100));
+                  return (
+                    <div key={category} className="rounded-lg border border-border bg-card p-2.5">
+                      <div className="mb-1.5 flex items-center justify-between gap-2 text-xs">
+                        <span className="font-medium text-foreground">{category.replace(/_/g, ' ')}</span>
+                        <span className="tabular-nums text-muted-foreground">{count}</span>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded-full bg-muted">
+                        <div className="h-full rounded-full bg-primary/80" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
 
       {reviewDueNow > 0 && (
         <Card className="mb-page-block border-l-4 border-l-muted-foreground bg-muted/30">

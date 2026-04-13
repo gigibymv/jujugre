@@ -58,6 +58,7 @@ export default function Dashboard() {
     studyPlan: plan,
     topicMastery,
     dailyCheckIns,
+    errorLogEntries,
     dailyQuote,
     hasCompletedOnboarding,
     hydrated,
@@ -73,6 +74,16 @@ export default function Dashboard() {
   const daysRemaining = plan.daysRemaining;
 
   const hasAnalyticsData = topicMastery.length > 0;
+  const hasErrorData = errorLogEntries.length > 0;
+  const errorsDueNow = errorLogEntries.filter((entry) => !entry.reviewed && entry.reviewDueDate <= new Date()).length;
+  const openErrors = errorLogEntries.filter((entry) => !entry.reviewed).length;
+  const topErrorCategory = Object.entries(
+    errorLogEntries.reduce((acc: Record<string, number>, entry) => {
+      acc[entry.errorCategory] = (acc[entry.errorCategory] ?? 0) + 1;
+      return acc;
+    }, {})
+  )
+    .sort((a, b) => b[1] - a[1])[0]?.[0];
   const weakAreas = topicMastery
     .filter((tm) => tm.masteryLevel === 'developing' || tm.masteryLevel === 'not_started')
     .sort((a, b) => a.practiceAccuracyPercent - b.practiceAccuracyPercent)
@@ -360,6 +371,54 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      <section className="mb-10 lg:mb-14">
+        <div className="mb-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h2 className="font-serif text-xl font-normal tracking-tight text-[#1f1c18] md:text-2xl">
+            Error log overview
+          </h2>
+          <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-[#7a7269]">
+            Review loop
+          </span>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            {
+              label: 'Total errors',
+              value: String(errorLogEntries.length),
+              hint: hasErrorData ? 'All logged mistakes' : 'No entries yet',
+            },
+            {
+              label: 'Open reviews',
+              value: String(openErrors),
+              hint: openErrors > 0 ? 'Need follow-up' : 'All reviewed',
+            },
+            {
+              label: 'Due now',
+              value: String(errorsDueNow),
+              hint: errorsDueNow > 0 ? 'Prioritize today' : 'No urgent review',
+            },
+            {
+              label: 'Top error type',
+              value: topErrorCategory ? topErrorCategory.replace(/_/g, ' ') : '—',
+              hint: hasErrorData ? 'Most frequent category' : 'Will appear after logging',
+            },
+          ].map((card) => (
+            <div key={card.label} className="rounded-xl border border-[#e8e4dc] bg-white px-4 py-4 shadow-sm">
+              <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7a7269]">
+                {card.label}
+              </p>
+              <p className="mt-1.5 font-serif text-2xl font-normal tracking-tight text-[#1f1c18]">
+                {card.value}
+              </p>
+              <p className="mt-1 text-xs text-[#5c564f]">{card.hint}</p>
+            </div>
+          ))}
+        </div>
+        <Link href="/error-log" className="mt-4 inline-block text-sm font-medium text-[#4a5d4e] underline-offset-4 hover:underline">
+          Open error dashboard
+        </Link>
+      </section>
 
       {/* Four white stat cards — stronger contrast on cream */}
       <div className="mb-10 grid grid-cols-2 gap-3 sm:gap-4 lg:mb-14 lg:grid-cols-4">
