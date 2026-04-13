@@ -5,16 +5,32 @@ import { ContentHeader } from '@/components/content-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { mockErrorLogEntries } from '@/lib/mock-data';
+import { useUserPlan } from '@/components/user-plan-provider';
 import Link from 'next/link';
 import { CheckCircle2, AlertCircle, Clock, Zap, BookOpen } from 'lucide-react';
 import { useState } from 'react';
 
 export default function ErrorLogPage() {
+  const { hasCompletedOnboarding } = useUserPlan();
   const [sortBy, setSortBy] = useState<'review_due' | 'recent' | 'topic'>('review_due');
   const [filterReviewed, setFilterReviewed] = useState<'all' | 'unreviewed' | 'reviewed'>('unreviewed');
+  const errorEntries: Array<{
+    id: string;
+    reviewed: boolean;
+    reviewDueDate: Date;
+    createdAt: Date;
+    topic: string;
+    errorCategory: string;
+    subtopic: string;
+    problem: string;
+    studentAnswer: string;
+    correctAnswer: string;
+    explanation: string;
+    protocolElements: string[];
+    sourceReference: string;
+  }> = [];
 
-  let filtered = mockErrorLogEntries;
+  let filtered = errorEntries;
   if (filterReviewed === 'unreviewed') {
     filtered = filtered.filter((e) => !e.reviewed);
   } else if (filterReviewed === 'reviewed') {
@@ -31,10 +47,10 @@ export default function ErrorLogPage() {
     return a.topic.localeCompare(b.topic);
   });
 
-  const unreviewedCount = mockErrorLogEntries.filter((e) => !e.reviewed).length;
+  const unreviewedCount = errorEntries.filter((e) => !e.reviewed).length;
   const reviewDueNow = sorted.filter((e) => e.reviewDueDate <= new Date()).length;
 
-  const categoryStats = mockErrorLogEntries.reduce(
+  const categoryStats = errorEntries.reduce(
     (acc: Record<string, number>, err) => {
       const cat = err.errorCategory;
       acc[cat] = (acc[cat] ?? 0) + 1;
@@ -61,7 +77,7 @@ export default function ErrorLogPage() {
             <CardTitle className="page-eyebrow">Total errors</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold tabular-nums text-foreground">{mockErrorLogEntries.length}</div>
+            <div className="text-3xl font-bold tabular-nums text-foreground">{errorEntries.length}</div>
           </CardContent>
         </Card>
 
@@ -87,7 +103,7 @@ export default function ErrorLogPage() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold tabular-nums text-accent">
-              {mockErrorLogEntries.filter((e) => e.reviewed).length}
+              {errorEntries.filter((e) => e.reviewed).length}
             </div>
           </CardContent>
         </Card>
@@ -141,7 +157,7 @@ export default function ErrorLogPage() {
             onClick={() => setFilterReviewed('reviewed')}
             className="text-xs"
           >
-            Reviewed ({mockErrorLogEntries.filter((e) => e.reviewed).length})
+            Reviewed ({errorEntries.filter((e) => e.reviewed).length})
           </Button>
           <Button
             variant={filterReviewed === 'all' ? 'default' : 'ghost'}
@@ -171,9 +187,13 @@ export default function ErrorLogPage() {
           <Card className="border-l-4 border-l-accent bg-muted/20">
             <CardContent className="pb-6 pt-6 text-center">
               <CheckCircle2 className="mx-auto mb-3 h-12 w-12 text-accent" aria-hidden />
-              <p className="mb-1 font-semibold text-foreground">All errors reviewed</p>
+              <p className="mb-1 font-semibold text-foreground">
+                {hasCompletedOnboarding ? 'No errors logged yet' : 'No error log yet'}
+              </p>
               <p className="text-sm text-muted-foreground">
-                Keep practicing to stay ahead of new mistakes.
+                {hasCompletedOnboarding
+                  ? 'When you add mistakes, they will appear here for spaced review.'
+                  : 'Complete onboarding and start practicing to build your error log.'}
               </p>
             </CardContent>
           </Card>

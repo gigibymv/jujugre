@@ -6,10 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { mockTopicMastery, mockErrorPatterns, mockConceptPrerequisites } from '@/lib/mock-data';
-import type { MasteryLevel } from '@/lib/data-schema';
-import { ErrorPatternInsights } from '@/components/error-pattern-insights';
-import { ConceptPrerequisites } from '@/components/concept-prerequisites';
+import { useUserPlan } from '@/components/user-plan-provider';
+import type { TopicMastery } from '@/lib/data-schema';
 import Link from 'next/link';
 import {
   TrendingUp,
@@ -21,10 +19,12 @@ import {
 } from 'lucide-react';
 
 export default function TopicMasteryPage() {
-  const mastered = mockTopicMastery.filter((t) => t.masteryLevel === 'mastered');
-  const proficient = mockTopicMastery.filter((t) => t.masteryLevel === 'proficient');
-  const developing = mockTopicMastery.filter((t) => t.masteryLevel === 'developing');
-  const notStarted = mockTopicMastery.filter((t) => t.masteryLevel === 'not_started');
+  const { hasCompletedOnboarding } = useUserPlan();
+  const topicMasteryData: TopicMastery[] = [];
+  const mastered = topicMasteryData.filter((t) => t.masteryLevel === 'mastered');
+  const proficient = topicMasteryData.filter((t) => t.masteryLevel === 'proficient');
+  const developing = topicMasteryData.filter((t) => t.masteryLevel === 'developing');
+  const notStarted = topicMasteryData.filter((t) => t.masteryLevel === 'not_started');
 
   const getMasteryColor = (level: string) => {
     switch (level) {
@@ -66,8 +66,9 @@ export default function TopicMasteryPage() {
     }
   };
 
-  const calculateMasteryScore = (topic: (typeof mockTopicMastery)[0]) => {
-    return Math.round(
+  const calculateMasteryScore = (topic: TopicMastery) => {
+    return Math.max(
+      0,
       topic.practiceAccuracyPercent * 0.4 +
         topic.taskCompletionPercent * 0.35 +
         topic.selfRatingAverage * 0.15 * 20 -
@@ -75,7 +76,7 @@ export default function TopicMasteryPage() {
     );
   };
 
-  const renderMasteryCard = (topic: (typeof mockTopicMastery)[0]) => {
+  const renderMasteryCard = (topic: TopicMastery) => {
     const colors = getMasteryColor(topic.masteryLevel);
     const IconComponent = colors.icon;
     const masteryScore = calculateMasteryScore(topic);
@@ -178,22 +179,15 @@ export default function TopicMasteryPage() {
         description="Track proficiency across GRE quantitative topics with multi-signal analysis."
       />
 
-      <div className="mb-page-block">
-        <ErrorPatternInsights patterns={mockErrorPatterns} />
-      </div>
-
-      <div className="mb-page-section">
-        <ConceptPrerequisites
-          prerequisites={mockConceptPrerequisites}
-          topicMasteryMap={mockTopicMastery.reduce(
-            (acc, tm) => {
-              acc[tm.subtopic] = tm.masteryLevel;
-              return acc;
-            },
-            {} as Record<string, MasteryLevel>
-          )}
-        />
-      </div>
+      {topicMasteryData.length === 0 && (
+        <Card className="mb-page-section border-l-4 border-l-accent bg-muted/20">
+          <CardContent className="pt-5 text-sm text-muted-foreground">
+            {hasCompletedOnboarding
+              ? 'No mastery data yet. Complete practice and log errors to generate your topic analytics.'
+              : 'Complete onboarding, then start studying to generate topic mastery data.'}
+          </CardContent>
+        </Card>
+      )}
 
       <div className="mb-page-section grid grid-cols-1 gap-6 md:grid-cols-4">
         {[
