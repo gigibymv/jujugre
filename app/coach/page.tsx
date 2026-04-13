@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { CoachMessageBody } from '@/components/coach-message-body';
 import { PageShell } from '@/components/page-shell';
 import { ContentHeader } from '@/components/content-header';
-import { mockCoachMessages } from '@/lib/mock-data';
+import { COACH_CLIENT_FALLBACK } from '@/lib/coach-client-copy';
 import { consumeCoachNdjsonStream } from '@/lib/coach-client-stream';
 import { useState } from 'react';
 import {
@@ -99,7 +99,6 @@ export default function CoachPage() {
           console.error('[jujugre] coach stream:', streamErr);
           setStreamBuffer(null);
           const fallback =
-            mockCoachMessages[0]?.coachResponse ||
             'The reply was interrupted. Try again. If this keeps happening on Vercel Hobby (10s limit), upgrade the plan or set NEXT_PUBLIC_COACH_USE_STREAM=false in .env.local.';
           setMessages((prev) => [
             ...prev,
@@ -114,10 +113,7 @@ export default function CoachPage() {
             `The coach request failed (${res.status}). You can try again in a moment.`;
         }
 
-        const text =
-          full.trim() ||
-          mockCoachMessages[0]?.coachResponse ||
-          'No response. Try again in a moment.';
+        const text = full.trim() || COACH_CLIENT_FALLBACK;
         setMessages((prev) => [
           ...prev,
           { role: 'coach', content: text, protocolCompliant },
@@ -149,10 +145,7 @@ export default function CoachPage() {
         content?: string;
         protocolCompliant?: boolean;
       };
-      const text =
-        data.content ||
-        mockCoachMessages[0]?.coachResponse ||
-        'No response. Try again in a moment.';
+      const text = data.content || COACH_CLIENT_FALLBACK;
       setMessages((prev) => [
         ...prev,
         { role: 'coach', content: text, protocolCompliant: data.protocolCompliant ?? true },
@@ -160,9 +153,7 @@ export default function CoachPage() {
       setStreamBuffer(null);
     } catch (err) {
       console.error('[jujugre] coach client:', err);
-      const fallback =
-        mockCoachMessages[0]?.coachResponse ||
-        'Network error. Check your connection and try again.';
+      const fallback = 'Network error. Check your connection and try again.';
       setMessages((prev) => [...prev, { role: 'coach', content: fallback, protocolCompliant: true }]);
       setStreamBuffer(null);
     } finally {

@@ -5,16 +5,18 @@ import { ContentHeader } from '@/components/content-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { mockErrorLogEntries } from '@/lib/mock-data';
+import type { ErrorLogEntry } from '@/lib/data-schema';
 import Link from 'next/link';
 import { CheckCircle2, AlertCircle, Clock, Zap, BookOpen } from 'lucide-react';
 import { useState } from 'react';
+
+const entries: ErrorLogEntry[] = [];
 
 export default function ErrorLogPage() {
   const [sortBy, setSortBy] = useState<'review_due' | 'recent' | 'topic'>('review_due');
   const [filterReviewed, setFilterReviewed] = useState<'all' | 'unreviewed' | 'reviewed'>('unreviewed');
 
-  let filtered = mockErrorLogEntries;
+  let filtered = entries;
   if (filterReviewed === 'unreviewed') {
     filtered = filtered.filter((e) => !e.reviewed);
   } else if (filterReviewed === 'reviewed') {
@@ -31,10 +33,10 @@ export default function ErrorLogPage() {
     return a.topic.localeCompare(b.topic);
   });
 
-  const unreviewedCount = mockErrorLogEntries.filter((e) => !e.reviewed).length;
+  const unreviewedCount = entries.filter((e) => !e.reviewed).length;
   const reviewDueNow = sorted.filter((e) => e.reviewDueDate <= new Date()).length;
 
-  const categoryStats = mockErrorLogEntries.reduce(
+  const categoryStats = entries.reduce(
     (acc: Record<string, number>, err) => {
       const cat = err.errorCategory;
       acc[cat] = (acc[cat] ?? 0) + 1;
@@ -61,7 +63,7 @@ export default function ErrorLogPage() {
             <CardTitle className="page-eyebrow">Total errors</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold tabular-nums text-foreground">{mockErrorLogEntries.length}</div>
+            <div className="text-3xl font-bold tabular-nums text-foreground">{entries.length}</div>
           </CardContent>
         </Card>
 
@@ -87,7 +89,7 @@ export default function ErrorLogPage() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold tabular-nums text-accent">
-              {mockErrorLogEntries.filter((e) => e.reviewed).length}
+              {entries.filter((e) => e.reviewed).length}
             </div>
           </CardContent>
         </Card>
@@ -141,7 +143,7 @@ export default function ErrorLogPage() {
             onClick={() => setFilterReviewed('reviewed')}
             className="text-xs"
           >
-            Reviewed ({mockErrorLogEntries.filter((e) => e.reviewed).length})
+            Reviewed ({entries.filter((e) => e.reviewed).length})
           </Button>
           <Button
             variant={filterReviewed === 'all' ? 'default' : 'ghost'}
@@ -171,9 +173,13 @@ export default function ErrorLogPage() {
           <Card className="border-l-4 border-l-accent bg-muted/20">
             <CardContent className="pb-6 pt-6 text-center">
               <CheckCircle2 className="mx-auto mb-3 h-12 w-12 text-accent" aria-hidden />
-              <p className="mb-1 font-semibold text-foreground">All errors reviewed</p>
+              <p className="mb-1 font-semibold text-foreground">
+                {entries.length === 0 ? 'No errors logged yet' : 'All errors reviewed'}
+              </p>
               <p className="text-sm text-muted-foreground">
-                Keep practicing to stay ahead of new mistakes.
+                {entries.length === 0
+                  ? 'When you log mistakes from practice, they will show up here for spaced review.'
+                  : 'Keep practicing to stay ahead of new mistakes.'}
               </p>
             </CardContent>
           </Card>

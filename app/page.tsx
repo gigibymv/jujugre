@@ -7,8 +7,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { PageShell } from '@/components/page-shell';
-import { mockTopicMastery, mockDailyCheckIns } from '@/lib/mock-data';
-import type { TopicMastery } from '@/lib/data-schema';
+import type { QuantTopic, StudyPlan } from '@/lib/data-schema';
 import { useUserPlan } from '@/components/user-plan-provider';
 import Link from 'next/link';
 import {
@@ -51,12 +50,34 @@ function getDailyQuote(dateString?: string): (typeof DAILY_QUOTES)[0] {
   return DAILY_QUOTES[hash % DAILY_QUOTES.length];
 }
 
-function avgAccuracy(topics: TopicMastery[], pred: (t: TopicMastery) => boolean): number {
-  const filtered = topics.filter(pred);
-  if (!filtered.length) return 0;
-  return Math.round(
-    filtered.reduce((s, t) => s + t.practiceAccuracyPercent, 0) / filtered.length
-  );
+type DashboardWeakFocus = {
+  id: string;
+  topic: QuantTopic;
+  subtopic: string;
+  practiceAccuracyPercent: number;
+};
+
+function weakFocusFromOnboarding(areas: QuantTopic[]): DashboardWeakFocus[] {
+  return areas.slice(0, 3).map((topic, i) => ({
+    id: `weak-${i}`,
+    topic,
+    subtopic: topic.replace(/_/g, ' '),
+    practiceAccuracyPercent: 0,
+  }));
+}
+
+function planWideTaskCompletionPercent(plan: StudyPlan): number {
+  let total = 0;
+  let done = 0;
+  for (const m of plan.modules) {
+    for (const p of m.parts) {
+      for (const t of p.tasks) {
+        total += 1;
+        if (t.completed) done += 1;
+      }
+    }
+  }
+  return total > 0 ? Math.round((done / total) * 100) : 0;
 }
 
 function iconForTopic(topic: string) {
@@ -88,12 +109,9 @@ export default function Dashboard() {
   const currentPart = currentModule?.parts.find((p) => p.id === plan.currentPartId);
   const daysRemaining = plan.daysRemaining;
 
-  const weakAreas = mockTopicMastery
-    .filter((tm) => tm.masteryLevel === 'developing' || tm.masteryLevel === 'not_started')
-    .sort((a, b) => (b.practiceAccuracyPercent || 0) - (a.practiceAccuracyPercent || 0))
-    .slice(0, 3);
+  const weakAreas = weakFocusFromOnboarding(user.weakAreasFromOnboarding ?? []);
 
-  const totalWordsLearned = mockDailyCheckIns.reduce((sum, ci) => sum + ci.wordsLearned, 0);
+  const totalWordsLearned = 0;
   const daysSinceStarted = isClient
     ? Math.floor((Date.now() - user.startDate.getTime()) / (1000 * 60 * 60 * 24))
     : 0;
@@ -104,23 +122,11 @@ export default function Dashboard() {
 
   const isOnTrack = plan.latenessState === 'on_track';
 
-  const masteredCount = mockTopicMastery.filter((t) => t.masteryLevel === 'mastered').length;
-  const avgAll =
-    mockTopicMastery.length > 0
-      ? Math.round(
-          mockTopicMastery.reduce((s, t) => s + t.practiceAccuracyPercent, 0) /
-            mockTopicMastery.length
-        )
-      : 0;
-
   const categoryBars = [
-    { label: 'Arithmetic', pct: avgAccuracy(mockTopicMastery, (t) => t.topic.startsWith('arithmetic_')) },
-    { label: 'Algebra', pct: avgAccuracy(mockTopicMastery, (t) => t.topic.startsWith('algebra_')) },
-    { label: 'Geometry', pct: avgAccuracy(mockTopicMastery, (t) => t.topic.startsWith('geometry_')) },
-    {
-      label: 'Data analysis',
-      pct: avgAccuracy(mockTopicMastery, (t) => t.topic.startsWith('data_analysis_')),
-    },
+    { label: 'Arithmetic', pct: 0 },
+    { label: 'Algebra', pct: 0 },
+    { label: 'Geometry', pct: 0 },
+    { label: 'Data analysis', pct: 0 },
   ];
 
   const weekLabel = `Week ${plan.currentWeekNumber} of 12`;
@@ -133,7 +139,8 @@ export default function Dashboard() {
       questionsApprox += p.tasks.filter((t) => t.completed).length * 12;
     }
   }
-  questionsApprox += Math.round(mockTopicMastery.reduce((s, t) => s + t.practiceAccuracyPercent, 0) / 4);
+
+  const planWidePct = planWideTaskCompletionPercent(plan);
 
   return (
     <PageShell variant="canvas">
@@ -238,16 +245,16 @@ export default function Dashboard() {
               <div>
                 <div className="flex items-baseline justify-between gap-2">
                   <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7a7269]">
-                    Accuracy
+                    Plan overall
                   </span>
                   <span className="font-serif text-2xl tabular-nums tracking-tight text-[#1f1c18]">
-                    {avgAll}%
+                    {planWidePct}%
                   </span>
                 </div>
                 <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-[#ebe7df]">
                   <div
                     className="h-full rounded-full transition-[width] duration-500"
-                    style={{ width: `${avgAll}%`, backgroundColor: ACCENT }}
+                    style={{ width: `${planWidePct}%`, backgroundColor: ACCENT }}
                   />
                 </div>
               </div>
@@ -313,7 +320,8 @@ export default function Dashboard() {
               })
             ) : (
               <p className="rounded-xl bg-[#f3f1eb] px-4 py-5 text-sm text-[#5c564f]">
-                Strong work — all areas at 70% or above.
+                Choose weak areas in Settings (or onboarding) to pin focus topics here. Practice data will fill in
+                as you log work.
               </p>
             )}
           </div>
@@ -383,9 +391,9 @@ export default function Dashboard() {
             sub: isOnTrack ? 'On pace this week' : 'Add a review block',
           },
           {
-            eyebrow: 'Accuracy',
-            value: `${avgAll}%`,
-            sub: 'Across topics',
+            eyebrow: 'Plan progress',
+            value: `${planWidePct}%`,
+            sub: 'All tasks in the 12-week plan',
           },
           {
             eyebrow: 'Completion',
@@ -395,7 +403,7 @@ export default function Dashboard() {
           {
             eyebrow: 'Vocabulary',
             value: isClient ? String(totalWordsLearned) : '—',
-            sub: `${mockDailyCheckIns.slice(0, 7).reduce((s, c) => s + c.wordsLearned, 0)} this week`,
+            sub: 'Optional — track in your notebook for now',
           },
         ].map((stat) => (
           <div
@@ -418,7 +426,8 @@ export default function Dashboard() {
           By domain
         </h2>
         <p className="mt-1 max-w-xl text-sm text-[#5c564f]">
-          Average accuracy where you&apos;ve practiced — use it to decide what to review next.
+          Domain-level accuracy appears when you log practice or errors. Until then, use your plan and weak-area
+          picks to prioritize.
         </p>
         <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {categoryBars.map((cat) => (

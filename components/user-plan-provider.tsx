@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  applyTaskCompletion,
   buildStudyPlanForUser,
   clearPersistedState,
   createInitialPersistedState,
@@ -59,10 +58,10 @@ export function UserPlanProvider({ children }: { children: ReactNode }) {
 
   const user = useMemo(() => mergeUserProfile(persisted), [persisted]);
 
-  const studyPlan = useMemo(() => {
-    const base = buildStudyPlanForUser(user);
-    return applyTaskCompletion(base, persisted?.taskCompletion ?? {});
-  }, [user, persisted?.taskCompletion]);
+  const studyPlan = useMemo(
+    () => buildStudyPlanForUser(user, persisted?.taskCompletion ?? {}),
+    [user, persisted?.taskCompletion]
+  );
 
   const completeOnboarding = useCallback(
     (input: {

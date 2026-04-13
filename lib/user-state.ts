@@ -1,5 +1,9 @@
 import type { QuantTopic, StudyPlan, UserProfile } from '@/lib/data-schema';
-import { mockStudyPlan, mockUserProfile } from '@/lib/mock-data';
+import { DEFAULT_USER_PROFILE } from '@/lib/default-user-profile';
+import { buildStudyPlanFromCurriculum } from '@/lib/study-plan-curriculum';
+
+export { computeDaysRemaining } from '@/lib/date-utils';
+export { applyTaskCompletion } from '@/lib/study-plan-utils';
 
 export const USER_STATE_STORAGE_KEY = 'jujugre-user-state-v1';
 
@@ -48,15 +52,6 @@ export function weakTopicsToLabels(topics: QuantTopic[]): string[] {
   return [...new Set(labels)];
 }
 
-export function computeDaysRemaining(targetGREDate: Date): number {
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(targetGREDate);
-  end.setHours(0, 0, 0, 0);
-  const ms = end.getTime() - start.getTime();
-  return Math.max(0, Math.ceil(ms / (1000 * 60 * 60 * 24)));
-}
-
 function isPersistedV1(raw: unknown): raw is PersistedUserStateV1 {
   if (!raw || typeof raw !== 'object') return false;
   const o = raw as Record<string, unknown>;
@@ -96,9 +91,9 @@ export function clearPersistedState(): void {
 }
 
 export function mergeUserProfile(persisted: PersistedUserStateV1 | null): UserProfile {
-  if (!persisted) return { ...mockUserProfile };
+  if (!persisted) return { ...DEFAULT_USER_PROFILE };
   return {
-    ...mockUserProfile,
+    ...DEFAULT_USER_PROFILE,
     startDate: new Date(persisted.studyStartDate),
     targetGREDate: new Date(persisted.targetGREDate),
     weeklyHoursTarget: persisted.weeklyHoursTarget,
@@ -106,30 +101,11 @@ export function mergeUserProfile(persisted: PersistedUserStateV1 | null): UserPr
   };
 }
 
-export function applyTaskCompletion(
-  plan: StudyPlan,
-  taskCompletion: Record<string, boolean>
+export function buildStudyPlanForUser(
+  user: UserProfile,
+  taskCompletion: Record<string, boolean> = {}
 ): StudyPlan {
-  if (Object.keys(taskCompletion).length === 0) return plan;
-  const next = structuredClone(plan) as StudyPlan;
-  for (const mod of next.modules) {
-    for (const part of mod.parts) {
-      for (const task of part.tasks) {
-        if (taskCompletion[task.id] !== undefined) {
-          task.completed = taskCompletion[task.id];
-        }
-      }
-    }
-  }
-  return next;
-}
-
-export function buildStudyPlanForUser(user: UserProfile): StudyPlan {
-  const plan = structuredClone(mockStudyPlan) as StudyPlan;
-  plan.startDate = user.startDate;
-  plan.targetGREDate = user.targetGREDate;
-  plan.daysRemaining = computeDaysRemaining(user.targetGREDate);
-  return plan;
+  return buildStudyPlanFromCurriculum(user, taskCompletion);
 }
 
 export function patchPersistedPlanSettings(

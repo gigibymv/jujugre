@@ -84,7 +84,7 @@ test.describe('Coach UI', () => {
             status: 200,
             contentType: 'application/x-ndjson; charset=utf-8',
             body:
-              '{"c":"E2E mock coach reply."}\n{"done":true,"protocolCompliant":true}\n',
+              '{"c":"E2E stub coach reply."}\n{"done":true,"protocolCompliant":true}\n',
           });
           return;
         }
@@ -92,7 +92,7 @@ test.describe('Coach UI', () => {
           status: 200,
           contentType: 'application/json; charset=utf-8',
           body: JSON.stringify({
-            content: 'E2E mock coach reply.',
+            content: 'E2E stub coach reply.',
             protocolCompliant: true,
           }),
         });
@@ -100,11 +100,11 @@ test.describe('Coach UI', () => {
     );
   });
 
-  test('send message shows mocked coach reply', async ({ page }) => {
+  test('send message shows stub coach reply', async ({ page }) => {
     await page.goto('/coach');
     await page.getByPlaceholder(/Ask your coach/i).fill('E2E smoke question');
     await page.getByRole('button', { name: /Send message/i }).click();
-    await expect(page.getByText(/E2E mock coach reply/i)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(/E2E stub coach reply/i)).toBeVisible({ timeout: 20_000 });
   });
 });
 

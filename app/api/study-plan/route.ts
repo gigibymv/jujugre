@@ -1,6 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
-import { mockStudyPlan } from '@/lib/mock-data';
 
 // Defer Supabase client creation to avoid errors during build when env vars are missing
 function getSupabaseClient() {
@@ -33,12 +32,17 @@ export async function GET(request: Request) {
       }
     }
 
-    // Fallback to mock data when Supabase is not configured or fetch fails
-    return NextResponse.json(mockStudyPlan);
+    return NextResponse.json({
+      ok: true,
+      configured: false,
+      message: 'Supabase is not configured or no plan row was found. The app uses local storage for the study plan.',
+    });
   } catch (err) {
     console.error('[jujugre] study-plan API:', err);
-    // Always fallback to mock data on error
-    return NextResponse.json(mockStudyPlan);
+    return NextResponse.json(
+      { ok: false, error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
 

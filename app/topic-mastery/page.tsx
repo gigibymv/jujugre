@@ -6,8 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { mockTopicMastery, mockErrorPatterns, mockConceptPrerequisites } from '@/lib/mock-data';
-import type { MasteryLevel } from '@/lib/data-schema';
+import { CURRICULUM_CONCEPT_PREREQUISITES } from '@/lib/study-plan-curriculum';
+import type { ErrorPatternAnalysis, MasteryLevel, TopicMastery } from '@/lib/data-schema';
 import { ErrorPatternInsights } from '@/components/error-pattern-insights';
 import { ConceptPrerequisites } from '@/components/concept-prerequisites';
 import Link from 'next/link';
@@ -20,11 +20,14 @@ import {
   Sparkles,
 } from 'lucide-react';
 
+const topicMastery: TopicMastery[] = [];
+const errorPatterns: ErrorPatternAnalysis[] = [];
+
 export default function TopicMasteryPage() {
-  const mastered = mockTopicMastery.filter((t) => t.masteryLevel === 'mastered');
-  const proficient = mockTopicMastery.filter((t) => t.masteryLevel === 'proficient');
-  const developing = mockTopicMastery.filter((t) => t.masteryLevel === 'developing');
-  const notStarted = mockTopicMastery.filter((t) => t.masteryLevel === 'not_started');
+  const mastered = topicMastery.filter((t) => t.masteryLevel === 'mastered');
+  const proficient = topicMastery.filter((t) => t.masteryLevel === 'proficient');
+  const developing = topicMastery.filter((t) => t.masteryLevel === 'developing');
+  const notStarted = topicMastery.filter((t) => t.masteryLevel === 'not_started');
 
   const getMasteryColor = (level: string) => {
     switch (level) {
@@ -66,7 +69,7 @@ export default function TopicMasteryPage() {
     }
   };
 
-  const calculateMasteryScore = (topic: (typeof mockTopicMastery)[0]) => {
+  const calculateMasteryScore = (topic: TopicMastery) => {
     return Math.round(
       topic.practiceAccuracyPercent * 0.4 +
         topic.taskCompletionPercent * 0.35 +
@@ -75,7 +78,7 @@ export default function TopicMasteryPage() {
     );
   };
 
-  const renderMasteryCard = (topic: (typeof mockTopicMastery)[0]) => {
+  const renderMasteryCard = (topic: TopicMastery) => {
     const colors = getMasteryColor(topic.masteryLevel);
     const IconComponent = colors.icon;
     const masteryScore = calculateMasteryScore(topic);
@@ -179,13 +182,13 @@ export default function TopicMasteryPage() {
       />
 
       <div className="mb-page-block">
-        <ErrorPatternInsights patterns={mockErrorPatterns} />
+        <ErrorPatternInsights patterns={errorPatterns} />
       </div>
 
       <div className="mb-page-section">
         <ConceptPrerequisites
-          prerequisites={mockConceptPrerequisites}
-          topicMasteryMap={mockTopicMastery.reduce(
+          prerequisites={CURRICULUM_CONCEPT_PREREQUISITES}
+          topicMasteryMap={topicMastery.reduce(
             (acc, tm) => {
               acc[tm.subtopic] = tm.masteryLevel;
               return acc;
@@ -264,6 +267,19 @@ export default function TopicMasteryPage() {
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">{notStarted.map(renderMasteryCard)}</div>
         </section>
+      )}
+
+      {topicMastery.length === 0 && (
+        <Card className="mb-page-section border-dashed">
+          <CardContent className="py-8 text-center text-sm text-muted-foreground">
+            <BarChart3 className="mx-auto mb-3 h-10 w-10 opacity-40" aria-hidden />
+            <p className="font-medium text-foreground">No topic mastery data yet</p>
+            <p className="mt-2 max-w-md mx-auto">
+              Complete study-plan tasks and log practice; scores will appear here. Curriculum prerequisites below
+              still apply as you progress.
+            </p>
+          </CardContent>
+        </Card>
       )}
 
       <Card className="mt-page-section">
