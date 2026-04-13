@@ -14,7 +14,9 @@ import {
 } from '@/lib/user-state';
 import {
   createEmptyUserAnalyticsState,
+  isAnalyticsStorageKey,
   loadPersistedAnalytics,
+  savePersistedAnalytics,
   type UserAnalyticsState,
 } from '@/lib/user-analytics';
 import { getDailyQuoteForUser, type DailyQuote } from '@/lib/daily-quote';
@@ -54,10 +56,24 @@ type UserPlanContextValue = {
     weeklyHoursTarget?: number;
     weakAreaLabels?: string[];
   }) => void;
+  addErrorLogEntry: (
+    input: Omit<ErrorLogEntry, 'id' | 'userId' | 'createdAt' | 'reviewDueDate' | 'reviewed'> & {
+      reviewDueDate?: Date;
+      reviewInDays?: number;
+    }
+  ) => void;
+  setErrorLogReviewed: (errorId: string, reviewed: boolean) => void;
   resetLocalState: () => void;
 };
 
 const UserPlanContext = createContext<UserPlanContextValue | null>(null);
+
+function createClientId(prefix: string): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return `${prefix}-${crypto.randomUUID()}`;
+  }
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
 
 export function UserPlanProvider({ children }: { children: ReactNode }) {
   const [persisted, setPersisted] = useState<PersistedUserStateV1 | null>(null);
@@ -78,7 +94,13 @@ export function UserPlanProvider({ children }: { children: ReactNode }) {
     const onStorage = (event: StorageEvent) => {
       // Keep all open tabs in sync after updates or hard resets.
       if (event.storageArea !== window.localStorage) return;
-      if (event.key !== null && !isUserStorageKey(event.key)) return;
+      if (
+        event.key !== null &&
+        !isUserStorageKey(event.key) &&
+        !isAnalyticsStorageKey(event.key)
+      ) {
+        return;
+      }
       setPersisted(loadPersistedState());
       setAnalytics(loadPersistedAnalytics());
     };
@@ -103,6 +125,11 @@ export function UserPlanProvider({ children }: { children: ReactNode }) {
     });
     setDailyQuote(quote);
   }, [user.id, user.weakAreasFromOnboarding]);
+
+  useEffect(() => {
+    if (!hydrated || typeof window === 'undefined') return;
+    savePersistedAnalytics(analytics);
+  }, [analytics, hydrated]);
 
   const completeOnboarding = useCallback(
     (input: {
@@ -165,6 +192,51 @@ export function UserPlanProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  const addErrorLogEntry = useCallback(
+    (
+      input: Omit<ErrorLogEntry, 'id' | 'userId' | 'createdAt' | 'reviewDueDate' | 'reviewed'> & {
+        reviewDueDate?: Date;
+        reviewInDays?: number;
+      }
+    ) => {
+      const now = new Date();
+      const reviewDelayDays =
+        typeof input.reviewInDays === 'number' && Number.isFinite(input.reviewInDays)
+          ? Math.max(0, Math.min(30, Math.round(input.reviewInDays)))
+          : 2;
+      const defaultDueDate = new Date(now.getTime() + reviewDelayDays * 24 * 60 * 60 * 1000);
+      const { reviewInDays: _reviewInDays, ...entryPayload } = input;
+      const nextEntry: ErrorLogEntry = {
+        ...entryPayload,
+        id: createClientId('err'),
+        userId: user.id,
+        createdAt: now,
+        reviewDueDate: input.reviewDueDate ?? defaultDueDate,
+        reviewed: false,
+      };
+      setAnalytics((prev) => ({
+        ...prev,
+        errorLogEntries: [nextEntry, ...prev.errorLogEntries],
+      }));
+    },
+    [user.id]
+  );
+
+  const setErrorLogReviewed = useCallback((errorId: string, reviewed: boolean) => {
+    setAnalytics((prev) => ({
+      ...prev,
+      errorLogEntries: prev.errorLogEntries.map((entry) =>
+        entry.id === errorId
+          ? {
+              ...entry,
+              reviewed,
+              reviewDueDate: reviewed ? entry.reviewDueDate : new Date(),
+            }
+          : entry
+      ),
+    }));
+  }, []);
+
   const resetLocalState = useCallback(() => {
     clearPersistedState();
     setPersisted(null);
@@ -186,6 +258,8 @@ export function UserPlanProvider({ children }: { children: ReactNode }) {
       setTaskCompleted,
       clearStudyProgress,
       updatePlanSettings,
+      addErrorLogEntry,
+      setErrorLogReviewed,
       resetLocalState,
     }),
     [
@@ -201,6 +275,8 @@ export function UserPlanProvider({ children }: { children: ReactNode }) {
       setTaskCompleted,
       clearStudyProgress,
       updatePlanSettings,
+      addErrorLogEntry,
+      setErrorLogReviewed,
       resetLocalState,
     ]
   );

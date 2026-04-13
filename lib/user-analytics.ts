@@ -117,3 +117,8 @@ export function savePersistedAnalytics(state: UserAnalyticsState): void {
     JSON.stringify(toPersistedState(state))
   );
 }
+
+export function isAnalyticsStorageKey(key: string | null): boolean {
+  if (!key) return false;
+  return key === USER_ANALYTICS_STORAGE_KEY;
+}

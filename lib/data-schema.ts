@@ -172,6 +172,8 @@ export interface ErrorLogEntry {
   createdAt: Date;
   reviewDueDate: Date;
   reviewed: boolean;
+  screenshotDataUrl?: string;
+  screenshotFileName?: string;
 }
 
 export interface SourceMaterial {

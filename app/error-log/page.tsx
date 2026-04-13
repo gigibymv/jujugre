@@ -6,14 +6,34 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useUserPlan } from '@/components/user-plan-provider';
+import type { ErrorCategory, QuantSubtopic, QuestionType, QuantTopic } from '@/lib/data-schema';
 import Link from 'next/link';
 import { CheckCircle2, AlertCircle, Clock, Zap, BookOpen } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 export default function ErrorLogPage() {
-  const { hasCompletedOnboarding, errorLogEntries } = useUserPlan();
+  const { hasCompletedOnboarding, errorLogEntries, addErrorLogEntry, setErrorLogReviewed } = useUserPlan();
   const [sortBy, setSortBy] = useState<'review_due' | 'recent' | 'topic'>('review_due');
   const [filterReviewed, setFilterReviewed] = useState<'all' | 'unreviewed' | 'reviewed'>('unreviewed');
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [screenshotDataUrl, setScreenshotDataUrl] = useState<string | null>(null);
+  const [screenshotFileName, setScreenshotFileName] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [newEntry, setNewEntry] = useState({
+    topic: 'algebra_linear_equations',
+    subtopic: 'solving_linear',
+    errorCategory: 'conceptual_misunderstanding',
+    questionType: 'multiple_choice_single',
+    sourceReference: '',
+    problem: '',
+    studentAnswer: '',
+    correctAnswer: '',
+    explanation: '',
+    protocolElements: '',
+    reviewInDays: '2',
+  });
 
   let filtered = errorLogEntries;
   if (filterReviewed === 'unreviewed') {
@@ -48,6 +68,85 @@ export default function ErrorLogPage() {
     | [string, number]
     | undefined;
 
+  const handleScreenshotSelect = async (file: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setFormError('Only image files are supported for screenshots.');
+      return;
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      setFormError('Screenshot too large. Max size is 4 MB.');
+      return;
+    }
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result ?? ''));
+      reader.onerror = () => reject(new Error('Failed to read screenshot file.'));
+      reader.readAsDataURL(file);
+    });
+    setScreenshotDataUrl(dataUrl);
+    setScreenshotFileName(file.name);
+    setFormError(null);
+  };
+
+  const resetForm = () => {
+    setNewEntry({
+      topic: 'algebra_linear_equations',
+      subtopic: 'solving_linear',
+      errorCategory: 'conceptual_misunderstanding',
+      questionType: 'multiple_choice_single',
+      sourceReference: '',
+      problem: '',
+      studentAnswer: '',
+      correctAnswer: '',
+      explanation: '',
+      protocolElements: '',
+      reviewInDays: '2',
+    });
+    setScreenshotDataUrl(null);
+    setScreenshotFileName(null);
+    setFormError(null);
+  };
+
+  const handleAddError = async () => {
+    if (!newEntry.problem.trim() || !newEntry.studentAnswer.trim() || !newEntry.correctAnswer.trim()) {
+      setFormError('Problem, your answer, and correct answer are required.');
+      return;
+    }
+    const reviewInDaysNumber = Number(newEntry.reviewInDays);
+    if (!Number.isFinite(reviewInDaysNumber) || reviewInDaysNumber < 0 || reviewInDaysNumber > 30) {
+      setFormError('Review delay must be between 0 and 30 days.');
+      return;
+    }
+    setIsSaving(true);
+    try {
+      addErrorLogEntry({
+        topic: newEntry.topic as QuantTopic,
+        subtopic: newEntry.subtopic as QuantSubtopic,
+        errorCategory: newEntry.errorCategory as ErrorCategory,
+        questionType: newEntry.questionType as QuestionType,
+        sourceReference: newEntry.sourceReference.trim() || 'Self-logged',
+        problem: newEntry.problem.trim(),
+        studentAnswer: newEntry.studentAnswer.trim(),
+        correctAnswer: newEntry.correctAnswer.trim(),
+        explanation: newEntry.explanation.trim() || 'Review this mistake and derive the governing rule.',
+        protocolElements: newEntry.protocolElements
+          .split(',')
+          .map((el) => el.trim())
+          .filter(Boolean),
+        reviewInDays: reviewInDaysNumber,
+        screenshotDataUrl: screenshotDataUrl ?? undefined,
+        screenshotFileName: screenshotFileName ?? undefined,
+      });
+      resetForm();
+      setIsFormOpen(false);
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Unable to save this error entry.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <PageShell>
       <ContentHeader
@@ -55,6 +154,225 @@ export default function ErrorLogPage() {
         title="Error log"
         description="Turn mistakes into reusable learning. Each error is a data point on your path."
       />
+
+      <Card className="mb-page-block">
+        <CardHeader>
+          <CardTitle className="text-base font-semibold text-foreground">Add an error</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {!isFormOpen ? (
+            <Button type="button" onClick={() => setIsFormOpen(true)} className="w-full sm:w-auto">
+              Add new error
+            </Button>
+          ) : (
+            <form
+              aria-label="Add error form"
+              className="space-y-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void handleAddError();
+              }}
+            >
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <label htmlFor="error-topic" className="text-xs text-muted-foreground">
+                  Topic
+                  <input
+                    id="error-topic"
+                    name="topic"
+                    className="mt-1 w-full rounded-md border border-border bg-background px-2 py-2 text-sm text-foreground"
+                    value={newEntry.topic}
+                    onChange={(e) => setNewEntry((prev) => ({ ...prev, topic: e.target.value }))}
+                  />
+                </label>
+                <label htmlFor="error-subtopic" className="text-xs text-muted-foreground">
+                  Subtopic
+                  <input
+                    id="error-subtopic"
+                    name="subtopic"
+                    className="mt-1 w-full rounded-md border border-border bg-background px-2 py-2 text-sm text-foreground"
+                    value={newEntry.subtopic}
+                    onChange={(e) => setNewEntry((prev) => ({ ...prev, subtopic: e.target.value }))}
+                  />
+                </label>
+                <label htmlFor="error-category" className="text-xs text-muted-foreground">
+                  Error category
+                  <input
+                    id="error-category"
+                    name="errorCategory"
+                    className="mt-1 w-full rounded-md border border-border bg-background px-2 py-2 text-sm text-foreground"
+                    value={newEntry.errorCategory}
+                    onChange={(e) =>
+                      setNewEntry((prev) => ({ ...prev, errorCategory: e.target.value }))
+                    }
+                  />
+                </label>
+                <label htmlFor="error-question-type" className="text-xs text-muted-foreground">
+                  Question type
+                  <input
+                    id="error-question-type"
+                    name="questionType"
+                    className="mt-1 w-full rounded-md border border-border bg-background px-2 py-2 text-sm text-foreground"
+                    value={newEntry.questionType}
+                    onChange={(e) =>
+                      setNewEntry((prev) => ({ ...prev, questionType: e.target.value }))
+                    }
+                  />
+                </label>
+              </div>
+
+              <label htmlFor="error-source-reference" className="block text-xs text-muted-foreground">
+                Source
+                <input
+                  id="error-source-reference"
+                  name="sourceReference"
+                  className="mt-1 w-full rounded-md border border-border bg-background px-2 py-2 text-sm text-foreground"
+                  value={newEntry.sourceReference}
+                  onChange={(e) => setNewEntry((prev) => ({ ...prev, sourceReference: e.target.value }))}
+                />
+              </label>
+              <label htmlFor="error-problem" className="block text-xs text-muted-foreground">
+                Problem statement
+                <textarea
+                  id="error-problem"
+                  name="problem"
+                  className="mt-1 min-h-20 w-full rounded-md border border-border bg-background px-2 py-2 text-sm text-foreground"
+                  value={newEntry.problem}
+                  onChange={(e) => setNewEntry((prev) => ({ ...prev, problem: e.target.value }))}
+                />
+              </label>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <label htmlFor="error-student-answer" className="text-xs text-muted-foreground">
+                  Your answer
+                  <input
+                    id="error-student-answer"
+                    name="studentAnswer"
+                    className="mt-1 w-full rounded-md border border-border bg-background px-2 py-2 text-sm text-foreground"
+                    value={newEntry.studentAnswer}
+                    onChange={(e) =>
+                      setNewEntry((prev) => ({ ...prev, studentAnswer: e.target.value }))
+                    }
+                  />
+                </label>
+                <label htmlFor="error-correct-answer" className="text-xs text-muted-foreground">
+                  Correct answer
+                  <input
+                    id="error-correct-answer"
+                    name="correctAnswer"
+                    className="mt-1 w-full rounded-md border border-border bg-background px-2 py-2 text-sm text-foreground"
+                    value={newEntry.correctAnswer}
+                    onChange={(e) =>
+                      setNewEntry((prev) => ({ ...prev, correctAnswer: e.target.value }))
+                    }
+                  />
+                </label>
+              </div>
+              <label htmlFor="error-explanation" className="block text-xs text-muted-foreground">
+                Explanation
+                <textarea
+                  id="error-explanation"
+                  name="explanation"
+                  className="mt-1 min-h-20 w-full rounded-md border border-border bg-background px-2 py-2 text-sm text-foreground"
+                  value={newEntry.explanation}
+                  onChange={(e) => setNewEntry((prev) => ({ ...prev, explanation: e.target.value }))}
+                />
+              </label>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <label htmlFor="error-protocol-elements" className="text-xs text-muted-foreground">
+                  Learning concepts (comma separated)
+                  <input
+                    id="error-protocol-elements"
+                    name="protocolElements"
+                    className="mt-1 w-full rounded-md border border-border bg-background px-2 py-2 text-sm text-foreground"
+                    value={newEntry.protocolElements}
+                    onChange={(e) =>
+                      setNewEntry((prev) => ({ ...prev, protocolElements: e.target.value }))
+                    }
+                  />
+                </label>
+                <label htmlFor="error-review-days" className="text-xs text-muted-foreground">
+                  Review in days (0-30)
+                  <input
+                    id="error-review-days"
+                    name="reviewInDays"
+                    type="number"
+                    min={0}
+                    max={30}
+                    className="mt-1 w-full rounded-md border border-border bg-background px-2 py-2 text-sm text-foreground"
+                    value={newEntry.reviewInDays}
+                    onChange={(e) => setNewEntry((prev) => ({ ...prev, reviewInDays: e.target.value }))}
+                  />
+                </label>
+              </div>
+
+              <div className="rounded-md border border-border bg-muted/20 p-3">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <p className="text-xs font-medium text-foreground">Screenshot (optional)</p>
+                  {screenshotDataUrl && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                      onClick={() => {
+                        setScreenshotDataUrl(null);
+                        setScreenshotFileName(null);
+                        if (fileInputRef.current) fileInputRef.current.value = '';
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  )}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  id="error-screenshot"
+                  name="screenshot"
+                  type="file"
+                  accept="image/*"
+                  className="text-xs"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] ?? null;
+                    void handleScreenshotSelect(file);
+                  }}
+                />
+                {screenshotFileName && (
+                  <p className="mt-2 text-xs text-muted-foreground">Selected: {screenshotFileName}</p>
+                )}
+                {screenshotDataUrl && (
+                  <img
+                    src={screenshotDataUrl}
+                    alt="Screenshot preview"
+                    className="mt-3 max-h-40 rounded-md border border-border object-contain"
+                  />
+                )}
+              </div>
+
+              {formError && (
+                <p className="text-sm text-destructive" role="alert">
+                  {formError}
+                </p>
+              )}
+
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button type="submit" disabled={isSaving}>
+                  {isSaving ? 'Saving…' : 'Save error'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    resetForm();
+                    setIsFormOpen(false);
+                  }}
+                  disabled={isSaving}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="mb-page-section grid grid-cols-1 gap-6 md:grid-cols-4">
         <Card>
@@ -289,6 +607,19 @@ export default function ErrorLogPage() {
                       <span className="italic">Source: {error.sourceReference}</span>
                     </div>
 
+                    {error.screenshotDataUrl && (
+                      <div className="rounded-lg border border-border bg-muted/20 p-3">
+                        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          Screenshot
+                        </p>
+                        <img
+                          src={error.screenshotDataUrl}
+                          alt={error.screenshotFileName || 'Attached screenshot'}
+                          className="max-h-56 rounded-md border border-border object-contain"
+                        />
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-1 gap-2 border-t border-border pt-2 sm:grid-cols-2">
                       {!error.reviewed && (
                         <>
@@ -301,9 +632,7 @@ export default function ErrorLogPage() {
                             variant="outline"
                             size="sm"
                             className="w-full min-w-0 text-xs"
-                            onClick={() => {
-                              console.log('Marked', error.id, 'as reviewed');
-                            }}
+                            onClick={() => setErrorLogReviewed(error.id, true)}
                           >
                             Mark reviewed
                           </Button>
@@ -314,6 +643,7 @@ export default function ErrorLogPage() {
                           variant="outline"
                           size="sm"
                           className="w-full text-xs sm:col-span-2"
+                          onClick={() => setErrorLogReviewed(error.id, false)}
                         >
                           Review again
                         </Button>
