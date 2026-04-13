@@ -2,6 +2,15 @@ import type { QuantTopic, StudyPlan, UserProfile } from '@/lib/data-schema';
 import { mockStudyPlan, mockUserProfile } from '@/lib/mock-data';
 
 export const USER_STATE_STORAGE_KEY = 'jujugre-user-state-v1';
+const USER_STORAGE_PREFIX = 'jujugre-';
+const LEGACY_STORAGE_KEYS = [
+  'jujugre-user-state',
+  'jujugre-user-plan',
+  'jujugre-study-progress',
+  'jujugre-progress',
+  'jujugre-onboarding',
+  'jujugre-onboarding-state',
+] as const;
 
 export type PersistedUserStateV1 = {
   version: 1;
@@ -92,7 +101,24 @@ export function savePersistedState(state: PersistedUserStateV1): void {
 
 export function clearPersistedState(): void {
   if (typeof window === 'undefined') return;
-  localStorage.removeItem(USER_STATE_STORAGE_KEY);
+  const keysToRemove = new Set<string>([USER_STATE_STORAGE_KEY, ...LEGACY_STORAGE_KEYS]);
+  for (let i = 0; i < localStorage.length; i += 1) {
+    const key = localStorage.key(i);
+    if (!key) continue;
+    if (key.startsWith(USER_STORAGE_PREFIX)) {
+      keysToRemove.add(key);
+    }
+  }
+  for (const key of keysToRemove) {
+    localStorage.removeItem(key);
+  }
+}
+
+export function isUserStorageKey(key: string | null): boolean {
+  if (!key) return false;
+  if (key === USER_STATE_STORAGE_KEY) return true;
+  if (LEGACY_STORAGE_KEYS.includes(key as (typeof LEGACY_STORAGE_KEYS)[number])) return true;
+  return key.startsWith(USER_STORAGE_PREFIX);
 }
 
 export function mergeUserProfile(persisted: PersistedUserStateV1 | null): UserProfile {

@@ -5,6 +5,7 @@ import {
   buildStudyPlanForUser,
   clearPersistedState,
   createInitialPersistedState,
+  isUserStorageKey,
   loadPersistedState,
   mergeUserProfile,
   patchPersistedPlanSettings,
@@ -55,6 +56,18 @@ export function UserPlanProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setPersisted(loadPersistedState());
     setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onStorage = (event: StorageEvent) => {
+      // Keep all open tabs in sync after updates or hard resets.
+      if (event.storageArea !== window.localStorage) return;
+      if (event.key !== null && !isUserStorageKey(event.key)) return;
+      setPersisted(loadPersistedState());
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }, []);
 
   const user = useMemo(() => mergeUserProfile(persisted), [persisted]);
