@@ -76,18 +76,39 @@ const mdComponents: Components = {
 };
 
 const rehypePlugins = [rehypeKatex({ errorColor: '#8a7d74' })];
-const remarkPlugins = [remarkGfm, remarkMath];
+const remarkPluginsFull = [remarkGfm, remarkMath];
+
+function plainTextFallback(content: string, className?: string) {
+  return (
+    <div className={cn(className, 'whitespace-pre-wrap break-words')}>{content}</div>
+  );
+}
 
 type CoachMessageBodyProps = {
   content: string;
   className?: string;
+  /**
+   * `gfm` — headings, lists, bold, etc. No KaTeX (safe on partial/streaming text).
+   * `full` — GFM + inline/display math via KaTeX.
+   */
+  variant?: 'full' | 'gfm';
 };
 
-function CoachMarkdown({ content, className }: CoachMessageBodyProps) {
+function CoachMarkdownGfm({ content, className }: CoachMessageBodyProps) {
+  return (
+    <div className={className}>
+      <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
+        {content}
+      </ReactMarkdown>
+    </div>
+  );
+}
+
+function CoachMarkdownFull({ content, className }: CoachMessageBodyProps) {
   return (
     <div className={className}>
       <ReactMarkdown
-        remarkPlugins={remarkPlugins}
+        remarkPlugins={remarkPluginsFull}
         rehypePlugins={rehypePlugins}
         components={mdComponents}
       >
@@ -98,16 +119,35 @@ function CoachMarkdown({ content, className }: CoachMessageBodyProps) {
 }
 
 /**
- * Markdown + math for coach replies. Wrapped so a rehype/remark edge case cannot
- * take down the whole chat (ErrorBoundary at app root would otherwise trigger).
+ * Markdown (+ optional KaTeX) for coach replies. Streaming uses `variant="gfm"` so
+ * `###` renders as headings instead of raw characters; full messages try KaTeX and
+ * fall back to GFM-only if math rendering throws.
  */
-export function CoachMessageBody({ content, className }: CoachMessageBodyProps) {
-  const fallback = (
-    <div className={cn(className, 'whitespace-pre-wrap break-words')}>{content}</div>
-  );
+export function CoachMessageBody({
+  content,
+  className,
+  variant = 'full',
+}: CoachMessageBodyProps) {
+  const boundaryKey = content.slice(0, 200);
+
+  if (variant === 'gfm') {
+    return (
+      <ErrorBoundary key={boundaryKey} fallback={plainTextFallback(content, className)}>
+        <CoachMarkdownGfm content={content} className={className} />
+      </ErrorBoundary>
+    );
+  }
+
   return (
-    <ErrorBoundary key={content.slice(0, 200)} fallback={fallback}>
-      <CoachMarkdown content={content} className={className} />
+    <ErrorBoundary
+      key={boundaryKey}
+      fallback={
+        <ErrorBoundary fallback={plainTextFallback(content, className)}>
+          <CoachMarkdownGfm content={content} className={className} />
+        </ErrorBoundary>
+      }
+    >
+      <CoachMarkdownFull content={content} className={className} />
     </ErrorBoundary>
   );
 }

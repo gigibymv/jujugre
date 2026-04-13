@@ -322,13 +322,11 @@ export default function CoachPage() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="coach-bubble-assistant">
-                          {/*
-                            Plain text while streaming — ReactMarkdown + KaTeX can throw on partial
-                            LaTeX (e.g. unclosed $...$), which looked like a broken coach.
-                          */}
-                          <div className="whitespace-pre-wrap break-words text-sm leading-relaxed text-foreground">
-                            {streamBuffer || '…'}
-                          </div>
+                          <CoachMessageBody
+                            content={streamBuffer || '…'}
+                            variant="gfm"
+                            className="text-sm leading-relaxed text-foreground"
+                          />
                           {isLoading && (
                             <p className="mt-2 text-xs text-muted-foreground">Streaming answer…</p>
                           )}
