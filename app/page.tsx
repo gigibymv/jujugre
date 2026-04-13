@@ -29,6 +29,12 @@ const ACCENT = '#4a5d4e';
 const MUTED = '#5c564f';
 const INK = '#1f1c18';
 
+/** Dashboard canvas: one CTA shape + one accent (avoid pill vs rounded-md + mixed greens). */
+const CANVAS_PRIMARY_CTA_CLASS = cn(
+  'inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-white shadow-sm transition-[transform,opacity] hover:opacity-95 active:scale-[0.99]',
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f1c18]/25 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f9f8f3]'
+);
+
 const DAILY_QUOTES = [
   { text: 'Hard topics are just future strengths waiting to be unlocked.', by: null },
   { text: 'Precision today builds confidence tomorrow.', by: null },
@@ -152,14 +158,13 @@ export default function Dashboard() {
           <span style={{ color: MUTED }}>
             Set your GRE date and weekly hours so the dashboard matches your plan.
           </span>
-          <Link href="/onboarding">
-            <Button
-              size="sm"
-              className="shrink-0 text-xs font-semibold uppercase tracking-widest text-white"
-              style={{ backgroundColor: ACCENT }}
-            >
-              Complete setup
-            </Button>
+          <Link
+            href="/onboarding"
+            className={cn(CANVAS_PRIMARY_CTA_CLASS, 'w-full shrink-0 sm:w-auto')}
+            style={{ backgroundColor: ACCENT }}
+          >
+            Complete setup
+            <ArrowRight className="h-4 w-4 shrink-0 opacity-95" aria-hidden />
           </Link>
         </div>
       )}
@@ -262,14 +267,13 @@ export default function Dashboard() {
           </div>
 
           <div className="flex shrink-0 flex-col justify-center lg:w-[min(100%,14rem)]">
-            <Link href="/study-plan" className="block w-full">
-              <span
-                className="flex w-full items-center justify-center gap-2 rounded-full px-5 py-3.5 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-white shadow-sm transition-transform active:scale-[0.99] lg:py-3"
-                style={{ backgroundColor: ACCENT }}
-              >
-                Start today&apos;s work
-                <ArrowRight className="h-4 w-4 shrink-0 opacity-95" aria-hidden />
-              </span>
+            <Link
+              href="/study-plan"
+              className={cn(CANVAS_PRIMARY_CTA_CLASS, 'w-full')}
+              style={{ backgroundColor: ACCENT }}
+            >
+              Start today&apos;s work
+              <ArrowRight className="h-4 w-4 shrink-0 opacity-95" aria-hidden />
             </Link>
           </div>
         </div>
