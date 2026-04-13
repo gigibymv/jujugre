@@ -85,9 +85,22 @@ export function savePersistedState(state: PersistedUserStateV1): void {
   localStorage.setItem(USER_STATE_STORAGE_KEY, JSON.stringify(state));
 }
 
+/**
+ * Removes all app keys from this origin (plan state + any legacy `jujugre*` keys).
+ * Error log / topic mastery are in-memory in current builds; older bundles may have used extra keys here.
+ */
 export function clearPersistedState(): void {
   if (typeof window === 'undefined') return;
-  localStorage.removeItem(USER_STATE_STORAGE_KEY);
+  const removePrefixed = (store: Storage, prefix: string) => {
+    const toRemove: string[] = [];
+    for (let i = 0; i < store.length; i++) {
+      const k = store.key(i);
+      if (k && k.startsWith(prefix)) toRemove.push(k);
+    }
+    toRemove.forEach((k) => store.removeItem(k));
+  };
+  removePrefixed(localStorage, 'jujugre');
+  removePrefixed(sessionStorage, 'jujugre');
 }
 
 export function mergeUserProfile(persisted: PersistedUserStateV1 | null): UserProfile {

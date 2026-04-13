@@ -368,6 +368,7 @@ export default function SettingsPage() {
                 )
               ) {
                 clearStudyProgress();
+                router.refresh();
               }
             }}
           >
@@ -375,8 +376,8 @@ export default function SettingsPage() {
             Clear study progress only
           </Button>
           <p className="text-xs text-muted-foreground">
-            Removes every completed checkbox on the 12-week plan. Demo tasks no longer reappear after a full reset —
-            progress is only what you save.
+            Removes every completed checkbox on the 12-week plan. If the dashboard still shows old numbers after a
+            deploy, do a hard refresh (Shift-Reload) so the latest app code loads.
           </p>
           <Button
             variant="destructive"
@@ -390,7 +391,8 @@ export default function SettingsPage() {
                 )
               ) {
                 resetLocalState();
-                router.push('/onboarding');
+                // Hard navigation so the browser loads a fresh document + JS (avoids stale cached bundles after deploy).
+                window.location.assign(`${window.location.origin}/onboarding`);
               }
             }}
           >
