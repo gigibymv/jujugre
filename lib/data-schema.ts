@@ -178,6 +178,8 @@ export interface ErrorLogEntry {
   lastOutcome?: DrillOutcome;
   nextAction?: string;
   lastFeedbackAt?: Date;
+  screenshotDataUrl?: string;
+  screenshotFileName?: string;
 }
 
 export interface SourceMaterial {

@@ -6,10 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { CURRICULUM_CONCEPT_PREREQUISITES } from '@/lib/study-plan-curriculum';
-import type { ErrorPatternAnalysis, MasteryLevel, TopicMastery } from '@/lib/data-schema';
-import { ErrorPatternInsights } from '@/components/error-pattern-insights';
-import { ConceptPrerequisites } from '@/components/concept-prerequisites';
+import { useUserPlan } from '@/components/user-plan-provider';
+import type { TopicMastery } from '@/lib/data-schema';
 import Link from 'next/link';
 import {
   TrendingUp,
@@ -20,14 +18,13 @@ import {
   Sparkles,
 } from 'lucide-react';
 
-const topicMastery: TopicMastery[] = [];
-const errorPatterns: ErrorPatternAnalysis[] = [];
-
 export default function TopicMasteryPage() {
-  const mastered = topicMastery.filter((t) => t.masteryLevel === 'mastered');
-  const proficient = topicMastery.filter((t) => t.masteryLevel === 'proficient');
-  const developing = topicMastery.filter((t) => t.masteryLevel === 'developing');
-  const notStarted = topicMastery.filter((t) => t.masteryLevel === 'not_started');
+  const { hasCompletedOnboarding, topicMastery } = useUserPlan();
+  const topicMasteryData: TopicMastery[] = topicMastery;
+  const mastered = topicMasteryData.filter((t) => t.masteryLevel === 'mastered');
+  const proficient = topicMasteryData.filter((t) => t.masteryLevel === 'proficient');
+  const developing = topicMasteryData.filter((t) => t.masteryLevel === 'developing');
+  const notStarted = topicMasteryData.filter((t) => t.masteryLevel === 'not_started');
 
   const getMasteryColor = (level: string) => {
     switch (level) {
@@ -70,7 +67,8 @@ export default function TopicMasteryPage() {
   };
 
   const calculateMasteryScore = (topic: TopicMastery) => {
-    return Math.round(
+    return Math.max(
+      0,
       topic.practiceAccuracyPercent * 0.4 +
         topic.taskCompletionPercent * 0.35 +
         topic.selfRatingAverage * 0.15 * 20 -
@@ -181,22 +179,15 @@ export default function TopicMasteryPage() {
         description="Track proficiency across GRE quantitative topics with multi-signal analysis."
       />
 
-      <div className="mb-page-block">
-        <ErrorPatternInsights patterns={errorPatterns} />
-      </div>
-
-      <div className="mb-page-section">
-        <ConceptPrerequisites
-          prerequisites={CURRICULUM_CONCEPT_PREREQUISITES}
-          topicMasteryMap={topicMastery.reduce(
-            (acc, tm) => {
-              acc[tm.subtopic] = tm.masteryLevel;
-              return acc;
-            },
-            {} as Record<string, MasteryLevel>
-          )}
-        />
-      </div>
+      {topicMasteryData.length === 0 && (
+        <Card className="mb-page-section border-l-4 border-l-accent bg-muted/20">
+          <CardContent className="pt-5 text-sm text-muted-foreground">
+            {hasCompletedOnboarding
+              ? 'No mastery data yet. Complete practice and log errors to generate your topic analytics.'
+              : 'Complete onboarding, then start studying to generate topic mastery data.'}
+          </CardContent>
+        </Card>
+      )}
 
       <div className="mb-page-section grid grid-cols-1 gap-6 md:grid-cols-4">
         {[
@@ -267,19 +258,6 @@ export default function TopicMasteryPage() {
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">{notStarted.map(renderMasteryCard)}</div>
         </section>
-      )}
-
-      {topicMastery.length === 0 && (
-        <Card className="mb-page-section border-dashed">
-          <CardContent className="py-8 text-center text-sm text-muted-foreground">
-            <BarChart3 className="mx-auto mb-3 h-10 w-10 opacity-40" aria-hidden />
-            <p className="font-medium text-foreground">No topic mastery data yet</p>
-            <p className="mt-2 max-w-md mx-auto">
-              Complete study-plan tasks and log practice; scores will appear here. Curriculum prerequisites below
-              still apply as you progress.
-            </p>
-          </CardContent>
-        </Card>
       )}
 
       <Card className="mt-page-section">

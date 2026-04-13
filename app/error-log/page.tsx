@@ -5,125 +5,57 @@ import { ContentHeader } from '@/components/content-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import type {
-  DrillOutcome,
-  ErrorCategory,
-  ErrorLogEntry,
-  QuantSubtopic,
-  QuestionType,
-} from '@/lib/data-schema';
-import {
-  appendErrorLogEntry,
-  loadErrorLogEntries,
-  setErrorLogEntryOutcome,
-  setErrorLogEntryReviewed,
-} from '@/lib/error-log-storage';
-import {
-  ERROR_CATEGORY_OPTIONS,
-  QUESTION_TYPE_OPTIONS,
-  SUBTOPIC_OPTIONS,
-} from '@/lib/error-log-form-options';
-import { getDrillPack } from '@/lib/error-drills';
+import { useUserPlan } from '@/components/user-plan-provider';
+import type { ErrorCategory, QuantSubtopic, QuestionType, QuantTopic } from '@/lib/data-schema';
 import Link from 'next/link';
-import { CheckCircle2, AlertCircle, Clock, Zap, BookOpen, ListChecks, Plus } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-
-const CATEGORY_LABEL = Object.fromEntries(ERROR_CATEGORY_OPTIONS.map((o) => [o.value, o.label]));
-
-const OUTCOME_META: Record<DrillOutcome, { label: string; score: number }> = {
-  struggled: { label: 'Struggled', score: 20 },
-  partial: { label: 'Partial', score: 10 },
-  mastered: { label: 'Mastered', score: -8 },
-};
-
-function computePriority(error: ErrorLogEntry, allEntries: ErrorLogEntry[], now: Date): number {
-  const daysUntilDue = Math.ceil((error.reviewDueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-  const dueBoost = daysUntilDue <= 0 ? 40 : Math.max(0, 18 - daysUntilDue * 2);
-  const repeatCount = allEntries.filter(
-    (e) => e.id !== error.id && e.subtopic === error.subtopic && e.errorCategory === error.errorCategory
-  ).length;
-  const confidencePenalty = (5 - (error.confidence ?? 3)) * 4;
-  const outcomeScore = OUTCOME_META[error.lastOutcome ?? 'struggled'].score;
-  return dueBoost + repeatCount * 14 + confidencePenalty + outcomeScore + (error.reviewed ? -20 : 18);
-}
+import { CheckCircle2, AlertCircle, Clock, Zap, BookOpen } from 'lucide-react';
+import { useRef, useState } from 'react';
 
 export default function ErrorLogPage() {
-  const [entries, setEntries] = useState<ErrorLogEntry[]>([]);
-  const [sortBy, setSortBy] = useState<'priority' | 'review_due' | 'recent' | 'topic'>('priority');
+  const { hasCompletedOnboarding, errorLogEntries, addErrorLogEntry, setErrorLogReviewed } = useUserPlan();
+  const [sortBy, setSortBy] = useState<'review_due' | 'recent' | 'topic'>('review_due');
   const [filterReviewed, setFilterReviewed] = useState<'all' | 'unreviewed' | 'reviewed'>('unreviewed');
-  const [formOpen, setFormOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [screenshotDataUrl, setScreenshotDataUrl] = useState<string | null>(null);
+  const [screenshotFileName, setScreenshotFileName] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [newEntry, setNewEntry] = useState({
+    topic: 'algebra_linear_equations',
+    subtopic: 'solving_linear',
+    errorCategory: 'conceptual_misunderstanding',
+    questionType: 'multiple_choice_single',
+    sourceReference: '',
+    problem: '',
+    studentAnswer: '',
+    correctAnswer: '',
+    explanation: '',
+    protocolElements: '',
+    reviewInDays: '2',
+  });
 
-  const [problem, setProblem] = useState('');
-  const [studentAnswer, setStudentAnswer] = useState('');
-  const [correctAnswer, setCorrectAnswer] = useState('');
-  const [explanation, setExplanation] = useState('');
-  const [sourceReference, setSourceReference] = useState('');
-  const [subtopic, setSubtopic] = useState<QuantSubtopic>(SUBTOPIC_OPTIONS[0]!.value);
-  const [errorCategory, setErrorCategory] = useState<ErrorCategory>(ERROR_CATEGORY_OPTIONS[0]!.value);
-  const [questionType, setQuestionType] = useState<QuestionType>('numeric_entry');
-
-  const refresh = useCallback(() => {
-    setEntries(loadErrorLogEntries());
-  }, []);
-
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
-
-  const handleAddMistake = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!problem.trim() || !studentAnswer.trim()) return;
-    appendErrorLogEntry({
-      problem,
-      studentAnswer,
-      correctAnswer,
-      explanation,
-      sourceReference,
-      subtopic,
-      errorCategory,
-      questionType,
-    });
-    setProblem('');
-    setStudentAnswer('');
-    setCorrectAnswer('');
-    setExplanation('');
-    setSourceReference('');
-    refresh();
-    setFormOpen(false);
-    setFilterReviewed('unreviewed');
-  };
-
-  let filtered = entries;
+  let filtered = errorLogEntries;
   if (filterReviewed === 'unreviewed') {
     filtered = filtered.filter((e) => !e.reviewed);
   } else if (filterReviewed === 'reviewed') {
     filtered = filtered.filter((e) => e.reviewed);
   }
 
-  const now = new Date();
+  const sorted = [...filtered].sort((a, b) => {
+    if (sortBy === 'review_due') {
+      return a.reviewDueDate.getTime() - b.reviewDueDate.getTime();
+    }
+    if (sortBy === 'recent') {
+      return b.createdAt.getTime() - a.createdAt.getTime();
+    }
+    return a.topic.localeCompare(b.topic);
+  });
 
-  const sorted = useMemo(() => {
-    return [...filtered].sort((a, b) => {
-      if (sortBy === 'priority') {
-        return computePriority(b, entries, now) - computePriority(a, entries, now);
-      }
-      if (sortBy === 'review_due') {
-        return a.reviewDueDate.getTime() - b.reviewDueDate.getTime();
-      }
-      if (sortBy === 'recent') {
-        return b.createdAt.getTime() - a.createdAt.getTime();
-      }
-      return a.topic.localeCompare(b.topic);
-    });
-  }, [entries, filtered, sortBy]);
+  const unreviewedCount = errorLogEntries.filter((e) => !e.reviewed).length;
+  const reviewDueNow = sorted.filter((e) => e.reviewDueDate <= new Date()).length;
 
-  const unreviewedCount = entries.filter((e) => !e.reviewed).length;
-  const reviewDueNow = sorted.filter((e) => e.reviewDueDate <= now).length;
-
-  const categoryStats = entries.reduce(
+  const categoryStats = errorLogEntries.reduce(
     (acc: Record<string, number>, err) => {
       const cat = err.errorCategory;
       acc[cat] = (acc[cat] ?? 0) + 1;
@@ -135,149 +67,319 @@ export default function ErrorLogPage() {
   const topProblematicCategory = Object.entries(categoryStats).sort((a, b) => b[1] - a[1])[0] as
     | [string, number]
     | undefined;
+  const categoryDistribution = Object.entries(categoryStats)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+  const topCategorySharePct =
+    errorLogEntries.length > 0 && topProblematicCategory
+      ? Math.round((topProblematicCategory[1] / errorLogEntries.length) * 100)
+      : 0;
+
+  const handleScreenshotSelect = async (file: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setFormError('Only image files are supported for screenshots.');
+      return;
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      setFormError('Screenshot too large. Max size is 4 MB.');
+      return;
+    }
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result ?? ''));
+      reader.onerror = () => reject(new Error('Failed to read screenshot file.'));
+      reader.readAsDataURL(file);
+    });
+    setScreenshotDataUrl(dataUrl);
+    setScreenshotFileName(file.name);
+    setFormError(null);
+  };
+
+  const resetForm = () => {
+    setNewEntry({
+      topic: 'algebra_linear_equations',
+      subtopic: 'solving_linear',
+      errorCategory: 'conceptual_misunderstanding',
+      questionType: 'multiple_choice_single',
+      sourceReference: '',
+      problem: '',
+      studentAnswer: '',
+      correctAnswer: '',
+      explanation: '',
+      protocolElements: '',
+      reviewInDays: '2',
+    });
+    setScreenshotDataUrl(null);
+    setScreenshotFileName(null);
+    setFormError(null);
+  };
+
+  const handleAddError = async () => {
+    if (!newEntry.problem.trim() || !newEntry.studentAnswer.trim() || !newEntry.correctAnswer.trim()) {
+      setFormError('Problem, your answer, and correct answer are required.');
+      return;
+    }
+    const reviewInDaysNumber = Number(newEntry.reviewInDays);
+    if (!Number.isFinite(reviewInDaysNumber) || reviewInDaysNumber < 0 || reviewInDaysNumber > 30) {
+      setFormError('Review delay must be between 0 and 30 days.');
+      return;
+    }
+    setIsSaving(true);
+    try {
+      addErrorLogEntry({
+        topic: newEntry.topic as QuantTopic,
+        subtopic: newEntry.subtopic as QuantSubtopic,
+        errorCategory: newEntry.errorCategory as ErrorCategory,
+        questionType: newEntry.questionType as QuestionType,
+        sourceReference: newEntry.sourceReference.trim() || 'Self-logged',
+        problem: newEntry.problem.trim(),
+        studentAnswer: newEntry.studentAnswer.trim(),
+        correctAnswer: newEntry.correctAnswer.trim(),
+        explanation: newEntry.explanation.trim() || 'Review this mistake and derive the governing rule.',
+        protocolElements: newEntry.protocolElements
+          .split(',')
+          .map((el) => el.trim())
+          .filter(Boolean),
+        reviewInDays: reviewInDaysNumber,
+        screenshotDataUrl: screenshotDataUrl ?? undefined,
+        screenshotFileName: screenshotFileName ?? undefined,
+      });
+      resetForm();
+      setIsFormOpen(false);
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Unable to save this error entry.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <PageShell>
       <ContentHeader
         eyebrow="Review"
         title="Error log"
-        description="Log a mistake in a few fields, run the suggested drills, then open the coach for structured feedback."
+        description="Turn mistakes into reusable learning. Each error is a data point on your path."
       />
 
-      <div className="mb-page-block">
-        <Button
-          type="button"
-          variant={formOpen ? 'secondary' : 'default'}
-          size="sm"
-          className="gap-2"
-          onClick={() => setFormOpen((o) => !o)}
-        >
-          <Plus className="h-4 w-4" aria-hidden />
-          {formOpen ? 'Close form' : 'Add a mistake'}
-        </Button>
-      </div>
-
-      {formOpen && (
-        <Card className="mb-page-section border-l-4 border-l-accent">
-          <CardHeader>
-            <CardTitle className="text-base font-semibold text-foreground">New error entry</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Short notes are enough. The coach gets a structured prompt; drills below are matched to the mistake
-              type.
-            </p>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleAddMistake} className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div className="space-y-2">
-                  <Label htmlFor="err-subtopic">Subtopic</Label>
-                  <select
-                    id="err-subtopic"
-                    value={subtopic}
-                    onChange={(e) => setSubtopic(e.target.value as QuantSubtopic)}
-                    className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                  >
-                    {SUBTOPIC_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="err-category">Mistake type</Label>
-                  <select
-                    id="err-category"
-                    value={errorCategory}
-                    onChange={(e) => setErrorCategory(e.target.value as ErrorCategory)}
-                    className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                  >
-                    {ERROR_CATEGORY_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="err-qtype">Question format</Label>
-                  <select
-                    id="err-qtype"
-                    value={questionType}
-                    onChange={(e) => setQuestionType(e.target.value as QuestionType)}
-                    className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                  >
-                    {QUESTION_TYPE_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="err-problem">Problem (stem or summary)</Label>
-                <Textarea
-                  id="err-problem"
-                  value={problem}
-                  onChange={(e) => setProblem(e.target.value)}
-                  placeholder="e.g. If x² − 5x + 6 = 0, what is the sum of the solutions?"
-                  required
-                  rows={3}
-                />
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="err-wrong">Your answer</Label>
-                  <Input
-                    id="err-wrong"
-                    value={studentAnswer}
-                    onChange={(e) => setStudentAnswer(e.target.value)}
-                    placeholder="What you put"
-                    required
+      <Card className="mb-page-block">
+        <CardHeader>
+          <CardTitle className="text-base font-semibold text-foreground">Add an error</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {!isFormOpen ? (
+            <Button type="button" onClick={() => setIsFormOpen(true)} className="w-full sm:w-auto">
+              Add new error
+            </Button>
+          ) : (
+            <form
+              aria-label="Add error form"
+              className="space-y-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void handleAddError();
+              }}
+            >
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <label htmlFor="error-topic" className="text-xs text-muted-foreground">
+                  Topic
+                  <input
+                    id="error-topic"
+                    name="topic"
+                    className="mt-1 w-full rounded-md border border-border bg-background px-2 py-2 text-sm text-foreground"
+                    value={newEntry.topic}
+                    onChange={(e) => setNewEntry((prev) => ({ ...prev, topic: e.target.value }))}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="err-right">Correct answer</Label>
-                  <Input
-                    id="err-right"
-                    value={correctAnswer}
-                    onChange={(e) => setCorrectAnswer(e.target.value)}
-                    placeholder="Answer key / target"
+                </label>
+                <label htmlFor="error-subtopic" className="text-xs text-muted-foreground">
+                  Subtopic
+                  <input
+                    id="error-subtopic"
+                    name="subtopic"
+                    className="mt-1 w-full rounded-md border border-border bg-background px-2 py-2 text-sm text-foreground"
+                    value={newEntry.subtopic}
+                    onChange={(e) => setNewEntry((prev) => ({ ...prev, subtopic: e.target.value }))}
                   />
+                </label>
+                <label htmlFor="error-category" className="text-xs text-muted-foreground">
+                  Error category
+                  <input
+                    id="error-category"
+                    name="errorCategory"
+                    className="mt-1 w-full rounded-md border border-border bg-background px-2 py-2 text-sm text-foreground"
+                    value={newEntry.errorCategory}
+                    onChange={(e) =>
+                      setNewEntry((prev) => ({ ...prev, errorCategory: e.target.value }))
+                    }
+                  />
+                </label>
+                <label htmlFor="error-question-type" className="text-xs text-muted-foreground">
+                  Question type
+                  <input
+                    id="error-question-type"
+                    name="questionType"
+                    className="mt-1 w-full rounded-md border border-border bg-background px-2 py-2 text-sm text-foreground"
+                    value={newEntry.questionType}
+                    onChange={(e) =>
+                      setNewEntry((prev) => ({ ...prev, questionType: e.target.value }))
+                    }
+                  />
+                </label>
+              </div>
+
+              <label htmlFor="error-source-reference" className="block text-xs text-muted-foreground">
+                Source
+                <input
+                  id="error-source-reference"
+                  name="sourceReference"
+                  className="mt-1 w-full rounded-md border border-border bg-background px-2 py-2 text-sm text-foreground"
+                  value={newEntry.sourceReference}
+                  onChange={(e) => setNewEntry((prev) => ({ ...prev, sourceReference: e.target.value }))}
+                />
+              </label>
+              <label htmlFor="error-problem" className="block text-xs text-muted-foreground">
+                Problem statement
+                <textarea
+                  id="error-problem"
+                  name="problem"
+                  className="mt-1 min-h-20 w-full rounded-md border border-border bg-background px-2 py-2 text-sm text-foreground"
+                  value={newEntry.problem}
+                  onChange={(e) => setNewEntry((prev) => ({ ...prev, problem: e.target.value }))}
+                />
+              </label>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <label htmlFor="error-student-answer" className="text-xs text-muted-foreground">
+                  Your answer
+                  <input
+                    id="error-student-answer"
+                    name="studentAnswer"
+                    className="mt-1 w-full rounded-md border border-border bg-background px-2 py-2 text-sm text-foreground"
+                    value={newEntry.studentAnswer}
+                    onChange={(e) =>
+                      setNewEntry((prev) => ({ ...prev, studentAnswer: e.target.value }))
+                    }
+                  />
+                </label>
+                <label htmlFor="error-correct-answer" className="text-xs text-muted-foreground">
+                  Correct answer
+                  <input
+                    id="error-correct-answer"
+                    name="correctAnswer"
+                    className="mt-1 w-full rounded-md border border-border bg-background px-2 py-2 text-sm text-foreground"
+                    value={newEntry.correctAnswer}
+                    onChange={(e) =>
+                      setNewEntry((prev) => ({ ...prev, correctAnswer: e.target.value }))
+                    }
+                  />
+                </label>
+              </div>
+              <label htmlFor="error-explanation" className="block text-xs text-muted-foreground">
+                Explanation
+                <textarea
+                  id="error-explanation"
+                  name="explanation"
+                  className="mt-1 min-h-20 w-full rounded-md border border-border bg-background px-2 py-2 text-sm text-foreground"
+                  value={newEntry.explanation}
+                  onChange={(e) => setNewEntry((prev) => ({ ...prev, explanation: e.target.value }))}
+                />
+              </label>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <label htmlFor="error-protocol-elements" className="text-xs text-muted-foreground">
+                  Learning concepts (comma separated)
+                  <input
+                    id="error-protocol-elements"
+                    name="protocolElements"
+                    className="mt-1 w-full rounded-md border border-border bg-background px-2 py-2 text-sm text-foreground"
+                    value={newEntry.protocolElements}
+                    onChange={(e) =>
+                      setNewEntry((prev) => ({ ...prev, protocolElements: e.target.value }))
+                    }
+                  />
+                </label>
+                <label htmlFor="error-review-days" className="text-xs text-muted-foreground">
+                  Review in days (0-30)
+                  <input
+                    id="error-review-days"
+                    name="reviewInDays"
+                    type="number"
+                    min={0}
+                    max={30}
+                    className="mt-1 w-full rounded-md border border-border bg-background px-2 py-2 text-sm text-foreground"
+                    value={newEntry.reviewInDays}
+                    onChange={(e) => setNewEntry((prev) => ({ ...prev, reviewInDays: e.target.value }))}
+                  />
+                </label>
+              </div>
+
+              <div className="rounded-md border border-border bg-muted/20 p-3">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <p className="text-xs font-medium text-foreground">Screenshot (optional)</p>
+                  {screenshotDataUrl && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                      onClick={() => {
+                        setScreenshotDataUrl(null);
+                        setScreenshotFileName(null);
+                        if (fileInputRef.current) fileInputRef.current.value = '';
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  )}
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="err-explain">What went wrong? (optional)</Label>
-                <Textarea
-                  id="err-explain"
-                  value={explanation}
-                  onChange={(e) => setExplanation(e.target.value)}
-                  placeholder="One line is fine — e.g. forgot to flip the inequality."
-                  rows={2}
+                <input
+                  ref={fileInputRef}
+                  id="error-screenshot"
+                  name="screenshot"
+                  type="file"
+                  accept="image/*"
+                  className="text-xs"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] ?? null;
+                    void handleScreenshotSelect(file);
+                  }}
                 />
+                {screenshotFileName && (
+                  <p className="mt-2 text-xs text-muted-foreground">Selected: {screenshotFileName}</p>
+                )}
+                {screenshotDataUrl && (
+                  <img
+                    src={screenshotDataUrl}
+                    alt="Screenshot preview"
+                    className="mt-3 max-h-40 rounded-md border border-border object-contain"
+                  />
+                )}
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="err-source">Source (optional)</Label>
-                <Input
-                  id="err-source"
-                  value={sourceReference}
-                  onChange={(e) => setSourceReference(e.target.value)}
-                  placeholder="Book, test, or deck name"
-                />
-              </div>
+              {formError && (
+                <p className="text-sm text-destructive" role="alert">
+                  {formError}
+                </p>
+              )}
 
-              <Button type="submit" className="w-full sm:w-auto">
-                Save to error log
-              </Button>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button type="submit" disabled={isSaving}>
+                  {isSaving ? 'Saving…' : 'Save error'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    resetForm();
+                    setIsFormOpen(false);
+                  }}
+                  disabled={isSaving}
+                >
+                  Cancel
+                </Button>
+              </div>
             </form>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </CardContent>
+      </Card>
 
       <div className="mb-page-section grid grid-cols-1 gap-6 md:grid-cols-4">
         <Card>
@@ -285,7 +387,7 @@ export default function ErrorLogPage() {
             <CardTitle className="page-eyebrow">Total errors</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold tabular-nums text-foreground">{entries.length}</div>
+            <div className="text-3xl font-bold tabular-nums text-foreground">{errorLogEntries.length}</div>
           </CardContent>
         </Card>
 
@@ -311,7 +413,7 @@ export default function ErrorLogPage() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold tabular-nums text-accent">
-              {entries.filter((e) => e.reviewed).length}
+              {errorLogEntries.filter((e) => e.reviewed).length}
             </div>
           </CardContent>
         </Card>
@@ -330,6 +432,51 @@ export default function ErrorLogPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="mb-page-block">
+        <CardHeader>
+          <CardTitle className="text-base font-semibold text-foreground">Error type dashboard</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {categoryDistribution.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Add a few errors to see which categories occur most often.
+            </p>
+          ) : (
+            <>
+              <div className="rounded-lg border border-border bg-muted/20 p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Most frequent type
+                </p>
+                <p className="mt-1 text-base font-semibold text-foreground">
+                  {topProblematicCategory ? topProblematicCategory[0].replace(/_/g, ' ') : 'N/A'}
+                </p>
+                {topProblematicCategory && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {topProblematicCategory[1]} of {errorLogEntries.length} errors ({topCategorySharePct}%)
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                {categoryDistribution.map(([category, count]) => {
+                  const pct = Math.max(4, Math.round((count / errorLogEntries.length) * 100));
+                  return (
+                    <div key={category} className="rounded-lg border border-border bg-card p-2.5">
+                      <div className="mb-1.5 flex items-center justify-between gap-2 text-xs">
+                        <span className="font-medium text-foreground">{category.replace(/_/g, ' ')}</span>
+                        <span className="tabular-nums text-muted-foreground">{count}</span>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded-full bg-muted">
+                        <div className="h-full rounded-full bg-primary/80" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
 
       {reviewDueNow > 0 && (
         <Card className="mb-page-block border-l-4 border-l-muted-foreground bg-muted/30">
@@ -365,7 +512,7 @@ export default function ErrorLogPage() {
             onClick={() => setFilterReviewed('reviewed')}
             className="text-xs"
           >
-            Reviewed ({entries.filter((e) => e.reviewed).length})
+            Reviewed ({errorLogEntries.filter((e) => e.reviewed).length})
           </Button>
           <Button
             variant={filterReviewed === 'all' ? 'default' : 'ghost'}
@@ -380,11 +527,10 @@ export default function ErrorLogPage() {
         <div className="flex gap-2 rounded-lg border border-border bg-card p-1 md:ml-auto">
           <select
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as 'priority' | 'review_due' | 'recent' | 'topic')}
+            onChange={(e) => setSortBy(e.target.value as 'review_due' | 'recent' | 'topic')}
             className="rounded-md border-0 bg-transparent px-3 py-2 text-xs text-foreground"
           >
-            <option value="priority">Smart priority</option>
-            <option value="review_due">Review due</option>
+            <option value="review_due">Review due (priority)</option>
             <option value="recent">Most recent</option>
             <option value="topic">By topic</option>
           </select>
@@ -397,12 +543,12 @@ export default function ErrorLogPage() {
             <CardContent className="pb-6 pt-6 text-center">
               <CheckCircle2 className="mx-auto mb-3 h-12 w-12 text-accent" aria-hidden />
               <p className="mb-1 font-semibold text-foreground">
-                {entries.length === 0 ? 'No errors logged yet' : 'Nothing in this filter'}
+                {hasCompletedOnboarding ? 'No errors logged yet' : 'No error log yet'}
               </p>
               <p className="text-sm text-muted-foreground">
-                {entries.length === 0
-                  ? 'Use “Add a mistake” above, or errors from practice will land here once wired.'
-                  : 'Switch filter to “All” or “Unreviewed”, or add a new entry.'}
+                {hasCompletedOnboarding
+                  ? 'When you add mistakes, they will appear here for spaced review.'
+                  : 'Complete onboarding and start practicing to build your error log.'}
               </p>
             </CardContent>
           </Card>
@@ -413,13 +559,10 @@ export default function ErrorLogPage() {
               .split(' ')
               .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
               .join(' ');
-            const isReviewDue = error.reviewDueDate <= now;
+            const isReviewDue = error.reviewDueDate <= new Date();
             const daysUntilDue = Math.ceil(
               (error.reviewDueDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
             );
-            const drillPack = getDrillPack(error.errorCategory, error.subtopic);
-            const priorityScore = computePriority(error, entries, now);
-            const categoryLabel = CATEGORY_LABEL[error.errorCategory] ?? error.errorCategory.replace(/_/g, ' ');
 
             return (
               <Card
@@ -441,10 +584,7 @@ export default function ErrorLogPage() {
                             {topicLabel}
                           </Badge>
                           <Badge variant="outline" className="text-xs">
-                            {categoryLabel}
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            Priority {priorityScore}
+                            {error.errorCategory.replace(/_/g, ' ')}
                           </Badge>
                           {error.reviewed && (
                             <Badge variant="secondary" className="gap-1 text-xs">
@@ -498,68 +638,6 @@ export default function ErrorLogPage() {
                       <p className="text-sm leading-relaxed text-foreground">{error.explanation}</p>
                     </div>
 
-                    <div className="rounded-lg border border-border bg-muted/25 p-3">
-                      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        <ListChecks className="h-4 w-4" aria-hidden />
-                        Suggested drills — {drillPack.title}
-                      </div>
-                      <ul className="list-inside list-disc space-y-1.5 text-sm text-foreground">
-                        {drillPack.exercises.map((line, i) => (
-                          <li key={i} className="leading-relaxed">
-                            {line}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    <div className="rounded-lg border border-border bg-card p-3">
-                      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Drill feedback
-                      </div>
-                      <div className="mb-2 flex flex-wrap gap-2">
-                        {(Object.keys(OUTCOME_META) as DrillOutcome[]).map((outcome) => (
-                          <Button
-                            key={outcome}
-                            variant={error.lastOutcome === outcome ? 'default' : 'outline'}
-                            size="sm"
-                            className="text-xs"
-                            onClick={() => {
-                              setErrorLogEntryOutcome(error.id, outcome);
-                              refresh();
-                            }}
-                          >
-                            {OUTCOME_META[outcome].label}
-                          </Button>
-                        ))}
-                      </div>
-                      <div className="flex items-center gap-2 text-xs">
-                        <span className="text-muted-foreground">Confidence:</span>
-                        <select
-                          value={error.confidence ?? 3}
-                          onChange={(e) => {
-                            setErrorLogEntryOutcome(error.id, error.lastOutcome ?? 'struggled', Number(e.target.value) as 1 | 2 | 3 | 4 | 5);
-                            refresh();
-                          }}
-                          className="rounded-md border border-input bg-transparent px-2 py-1"
-                        >
-                          {[1, 2, 3, 4, 5].map((n) => (
-                            <option key={n} value={n}>
-                              {n}/5
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-
-                    {error.nextAction && (
-                      <div className="rounded-lg border border-accent/30 bg-accent/5 p-3">
-                        <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-accent">
-                          Next action
-                        </div>
-                        <p className="text-sm leading-relaxed text-foreground">{error.nextAction}</p>
-                      </div>
-                    )}
-
                     {error.protocolElements && error.protocolElements.length > 0 && (
                       <div className="rounded-lg border border-border bg-muted/30 p-3">
                         <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -581,33 +659,43 @@ export default function ErrorLogPage() {
                       <span className="italic">Source: {error.sourceReference}</span>
                     </div>
 
+                    {error.screenshotDataUrl && (
+                      <div className="rounded-lg border border-border bg-muted/20 p-3">
+                        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          Screenshot
+                        </p>
+                        <img
+                          src={error.screenshotDataUrl}
+                          alt={error.screenshotFileName || 'Attached screenshot'}
+                          className="max-h-56 rounded-md border border-border object-contain"
+                        />
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-1 gap-2 border-t border-border pt-2 sm:grid-cols-2">
-                      <Link href={`/coach?fromError=${encodeURIComponent(error.id)}`} className="min-w-0">
-                        <Button variant="default" size="sm" className="w-full text-xs">
-                          Discuss with coach
-                        </Button>
-                      </Link>
-                      {!error.reviewed ? (
+                      {!error.reviewed && (
+                        <>
+                          <Link href={`/coach?error=${error.id}`} className="min-w-0">
+                            <Button variant="default" size="sm" className="w-full text-xs">
+                              Discuss with coach
+                            </Button>
+                          </Link>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full min-w-0 text-xs"
+                            onClick={() => setErrorLogReviewed(error.id, true)}
+                          >
+                            Mark reviewed
+                          </Button>
+                        </>
+                      )}
+                      {error.reviewed && (
                         <Button
                           variant="outline"
                           size="sm"
-                          className="w-full min-w-0 text-xs"
-                          onClick={() => {
-                            setErrorLogEntryReviewed(error.id, true);
-                            refresh();
-                          }}
-                        >
-                          Mark reviewed
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full min-w-0 text-xs"
-                          onClick={() => {
-                            setErrorLogEntryReviewed(error.id, false);
-                            refresh();
-                          }}
+                          className="w-full text-xs sm:col-span-2"
+                          onClick={() => setErrorLogReviewed(error.id, false)}
                         >
                           Review again
                         </Button>
@@ -629,18 +717,18 @@ export default function ErrorLogPage() {
           {[
             {
               n: '1',
-              title: 'Log the mistake',
-              body: 'Problem, your answer, and mistake type — enough for drills + coach context.',
+              title: 'Review errors due',
+              body: 'Prioritize items marked “due now” for the biggest learning impact.',
             },
             {
               n: '2',
-              title: 'Run the suggested drills',
-              body: 'Short, repeatable loops matched to the error category (and subtopic when relevant).',
+              title: 'Discuss with coach',
+              body: 'Use the coach to understand the concept behind each mistake.',
             },
             {
               n: '3',
-              title: 'Open the coach',
-              body: 'The message is prefilled so you get protocol-style feedback and similar practice ideas.',
+              title: 'Practice similar problems',
+              body: 'Drill until the pattern feels automatic.',
             },
           ].map((item) => (
             <div key={item.n} className="flex gap-3">

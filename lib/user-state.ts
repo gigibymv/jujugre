@@ -6,6 +6,15 @@ export { computeDaysRemaining } from '@/lib/date-utils';
 export { applyTaskCompletion } from '@/lib/study-plan-utils';
 
 export const USER_STATE_STORAGE_KEY = 'jujugre-user-state-v1';
+const USER_STORAGE_PREFIX = 'jujugre-';
+const LEGACY_STORAGE_KEYS = [
+  'jujugre-user-state',
+  'jujugre-user-plan',
+  'jujugre-study-progress',
+  'jujugre-progress',
+  'jujugre-onboarding',
+  'jujugre-onboarding-state',
+] as const;
 
 export type PersistedUserStateV1 = {
   version: 1;
@@ -91,16 +100,36 @@ export function savePersistedState(state: PersistedUserStateV1): void {
  */
 export function clearPersistedState(): void {
   if (typeof window === 'undefined') return;
-  const removePrefixed = (store: Storage, prefix: string) => {
-    const toRemove: string[] = [];
-    for (let i = 0; i < store.length; i++) {
-      const k = store.key(i);
-      if (k && k.startsWith(prefix)) toRemove.push(k);
+  const keysToRemove = new Set<string>([USER_STATE_STORAGE_KEY, ...LEGACY_STORAGE_KEYS]);
+  for (let i = 0; i < localStorage.length; i += 1) {
+    const key = localStorage.key(i);
+    if (!key) continue;
+    if (key.startsWith(USER_STORAGE_PREFIX)) {
+      keysToRemove.add(key);
     }
-    toRemove.forEach((k) => store.removeItem(k));
-  };
-  removePrefixed(localStorage, 'jujugre');
-  removePrefixed(sessionStorage, 'jujugre');
+  }
+  for (const key of keysToRemove) {
+    localStorage.removeItem(key);
+  }
+
+  const sessionKeysToRemove: string[] = [];
+  for (let i = 0; i < sessionStorage.length; i += 1) {
+    const key = sessionStorage.key(i);
+    if (!key) continue;
+    if (key.startsWith(USER_STORAGE_PREFIX)) {
+      sessionKeysToRemove.push(key);
+    }
+  }
+  for (const key of sessionKeysToRemove) {
+    sessionStorage.removeItem(key);
+  }
+}
+
+export function isUserStorageKey(key: string | null): boolean {
+  if (!key) return false;
+  if (key === USER_STATE_STORAGE_KEY) return true;
+  if (LEGACY_STORAGE_KEYS.includes(key as (typeof LEGACY_STORAGE_KEYS)[number])) return true;
+  return key.startsWith(USER_STORAGE_PREFIX);
 }
 
 export function mergeUserProfile(persisted: PersistedUserStateV1 | null): UserProfile {

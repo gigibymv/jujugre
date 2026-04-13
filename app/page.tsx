@@ -7,8 +7,8 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { PageShell } from '@/components/page-shell';
-import type { QuantTopic, StudyPlan } from '@/lib/data-schema';
 import { useUserPlan } from '@/components/user-plan-provider';
+import type { TopicMastery } from '@/lib/data-schema';
 import Link from 'next/link';
 import {
   ArrowRight,
@@ -29,61 +29,12 @@ const ACCENT = '#4a5d4e';
 const MUTED = '#5c564f';
 const INK = '#1f1c18';
 
-/** Dashboard canvas: one CTA shape + one accent (avoid pill vs rounded-md + mixed greens). */
-const CANVAS_PRIMARY_CTA_CLASS = cn(
-  'inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-white shadow-sm transition-[transform,opacity] hover:opacity-95 active:scale-[0.99]',
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f1c18]/25 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f9f8f3]'
-);
-
-const DAILY_QUOTES = [
-  { text: 'Hard topics are just future strengths waiting to be unlocked.', by: null },
-  { text: 'Precision today builds confidence tomorrow.', by: null },
-  { text: 'Every problem solved is progress made.', by: null },
-  {
-    text: 'The essence of mathematics is not to make simple things complicated, but to make complicated things simple.',
-    by: 'S. Gudder',
-  },
-  { text: "You're learning the exact patterns the GRE tests.", by: null },
-  { text: "Consistency over intensity—you've got this.", by: null },
-  { text: 'Master one concept, and build from there.', by: null },
-  { text: 'Rigor now means clarity on test day.', by: null },
-  { text: 'Your effort is compounding into skill.', by: null },
-];
-
-function getDailyQuote(dateString?: string): (typeof DAILY_QUOTES)[0] {
-  const hashDate = dateString || new Date().toDateString();
-  const hash = hashDate.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  return DAILY_QUOTES[hash % DAILY_QUOTES.length];
-}
-
-type DashboardWeakFocus = {
-  id: string;
-  topic: QuantTopic;
-  subtopic: string;
-  practiceAccuracyPercent: number;
-};
-
-function weakFocusFromOnboarding(areas: QuantTopic[]): DashboardWeakFocus[] {
-  return areas.slice(0, 3).map((topic, i) => ({
-    id: `weak-${i}`,
-    topic,
-    subtopic: topic.replace(/_/g, ' '),
-    practiceAccuracyPercent: 0,
-  }));
-}
-
-function planWideTaskCompletionPercent(plan: StudyPlan): number {
-  let total = 0;
-  let done = 0;
-  for (const m of plan.modules) {
-    for (const p of m.parts) {
-      for (const t of p.tasks) {
-        total += 1;
-        if (t.completed) done += 1;
-      }
-    }
-  }
-  return total > 0 ? Math.round((done / total) * 100) : 0;
+function avgAccuracy(topics: TopicMastery[], pred: (t: TopicMastery) => boolean): number {
+  const filtered = topics.filter(pred);
+  if (!filtered.length) return 0;
+  return Math.round(
+    filtered.reduce((sum, topic) => sum + topic.practiceAccuracyPercent, 0) / filtered.length
+  );
 }
 
 function iconForTopic(topic: string) {
@@ -102,22 +53,45 @@ function topicCategoryCaps(topic: string): string {
 }
 
 export default function Dashboard() {
-  const { user, studyPlan: plan, hasCompletedOnboarding, hydrated } = useUserPlan();
+  const {
+    user,
+    studyPlan: plan,
+    topicMastery,
+    dailyCheckIns,
+    errorLogEntries,
+    dailyQuote,
+    hasCompletedOnboarding,
+    hydrated,
+  } = useUserPlan();
   const [isClient, setIsClient] = useState(false);
-  const [dailyQuote, setDailyQuote] = useState<(typeof DAILY_QUOTES)[0] | null>(null);
 
   useEffect(() => {
     setIsClient(true);
-    setDailyQuote(getDailyQuote());
   }, []);
 
   const currentModule = plan.modules.find((m) => m.id === plan.currentModuleId);
   const currentPart = currentModule?.parts.find((p) => p.id === plan.currentPartId);
   const daysRemaining = plan.daysRemaining;
 
-  const weakAreas = weakFocusFromOnboarding(user.weakAreasFromOnboarding ?? []);
-
-  const totalWordsLearned = 0;
+  const hasAnalyticsData = topicMastery.length > 0;
+  const hasErrorData = errorLogEntries.length > 0;
+  const errorsDueNow = errorLogEntries.filter((entry) => !entry.reviewed && entry.reviewDueDate <= new Date()).length;
+  const openErrors = errorLogEntries.filter((entry) => !entry.reviewed).length;
+  const topErrorCategory = Object.entries(
+    errorLogEntries.reduce((acc: Record<string, number>, entry) => {
+      acc[entry.errorCategory] = (acc[entry.errorCategory] ?? 0) + 1;
+      return acc;
+    }, {})
+  )
+    .sort((a, b) => b[1] - a[1])[0]?.[0];
+  const weakAreas = topicMastery
+    .filter((tm) => tm.masteryLevel === 'developing' || tm.masteryLevel === 'not_started')
+    .sort((a, b) => a.practiceAccuracyPercent - b.practiceAccuracyPercent)
+    .slice(0, 3);
+  const totalWordsLearned = dailyCheckIns.reduce((sum, ci) => sum + ci.wordsLearned, 0);
+  const wordsThisWeek = dailyCheckIns
+    .filter((ci) => Date.now() - ci.date.getTime() <= 7 * 24 * 60 * 60 * 1000)
+    .reduce((sum, ci) => sum + ci.wordsLearned, 0);
   const daysSinceStarted = isClient
     ? Math.floor((Date.now() - user.startDate.getTime()) / (1000 * 60 * 60 * 24))
     : 0;
@@ -128,11 +102,22 @@ export default function Dashboard() {
 
   const isOnTrack = plan.latenessState === 'on_track';
 
+  const avgAll =
+    topicMastery.length > 0
+      ? Math.round(
+          topicMastery.reduce((sum, topic) => sum + topic.practiceAccuracyPercent, 0) /
+            topicMastery.length
+        )
+      : 0;
+
   const categoryBars = [
-    { label: 'Arithmetic', pct: 0 },
-    { label: 'Algebra', pct: 0 },
-    { label: 'Geometry', pct: 0 },
-    { label: 'Data analysis', pct: 0 },
+    { label: 'Arithmetic', pct: avgAccuracy(topicMastery, (t) => t.topic.startsWith('arithmetic_')) },
+    { label: 'Algebra', pct: avgAccuracy(topicMastery, (t) => t.topic.startsWith('algebra_')) },
+    { label: 'Geometry', pct: avgAccuracy(topicMastery, (t) => t.topic.startsWith('geometry_')) },
+    {
+      label: 'Data analysis',
+      pct: avgAccuracy(topicMastery, (t) => t.topic.startsWith('data_analysis_')),
+    },
   ];
 
   const weekLabel = `Week ${plan.currentWeekNumber} of 12`;
@@ -146,8 +131,6 @@ export default function Dashboard() {
     }
   }
 
-  const planWidePct = planWideTaskCompletionPercent(plan);
-
   return (
     <PageShell variant="canvas">
       {hydrated && !hasCompletedOnboarding && (
@@ -158,13 +141,14 @@ export default function Dashboard() {
           <span style={{ color: MUTED }}>
             Set your GRE date and weekly hours so the dashboard matches your plan.
           </span>
-          <Link
-            href="/onboarding"
-            className={cn(CANVAS_PRIMARY_CTA_CLASS, 'w-full shrink-0 sm:w-auto')}
-            style={{ backgroundColor: ACCENT }}
-          >
-            Complete setup
-            <ArrowRight className="h-4 w-4 shrink-0 opacity-95" aria-hidden />
+          <Link href="/onboarding">
+            <Button
+              size="sm"
+              className="shrink-0 text-xs font-semibold uppercase tracking-widest text-white"
+              style={{ backgroundColor: ACCENT }}
+            >
+              Complete setup
+            </Button>
           </Link>
         </div>
       )}
@@ -250,16 +234,16 @@ export default function Dashboard() {
               <div>
                 <div className="flex items-baseline justify-between gap-2">
                   <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7a7269]">
-                    Plan overall
+                    Accuracy
                   </span>
                   <span className="font-serif text-2xl tabular-nums tracking-tight text-[#1f1c18]">
-                    {planWidePct}%
+                    {avgAll}%
                   </span>
                 </div>
                 <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-[#ebe7df]">
                   <div
                     className="h-full rounded-full transition-[width] duration-500"
-                    style={{ width: `${planWidePct}%`, backgroundColor: ACCENT }}
+                    style={{ width: `${avgAll}%`, backgroundColor: ACCENT }}
                   />
                 </div>
               </div>
@@ -267,13 +251,14 @@ export default function Dashboard() {
           </div>
 
           <div className="flex shrink-0 flex-col justify-center lg:w-[min(100%,14rem)]">
-            <Link
-              href="/study-plan"
-              className={cn(CANVAS_PRIMARY_CTA_CLASS, 'w-full')}
-              style={{ backgroundColor: ACCENT }}
-            >
-              Start today&apos;s work
-              <ArrowRight className="h-4 w-4 shrink-0 opacity-95" aria-hidden />
+            <Link href="/study-plan" className="block w-full">
+              <span
+                className="flex w-full items-center justify-center gap-2 rounded-full px-5 py-3.5 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-white shadow-sm transition-transform active:scale-[0.99] lg:py-3"
+                style={{ backgroundColor: ACCENT }}
+              >
+                Start today&apos;s work
+                <ArrowRight className="h-4 w-4 shrink-0 opacity-95" aria-hidden />
+              </span>
             </Link>
           </div>
         </div>
@@ -324,8 +309,9 @@ export default function Dashboard() {
               })
             ) : (
               <p className="rounded-xl bg-[#f3f1eb] px-4 py-5 text-sm text-[#5c564f]">
-                Choose weak areas in Settings (or onboarding) to pin focus topics here. Practice data will fill in
-                as you log work.
+                {hasAnalyticsData
+                  ? 'Strong work — all areas at 70% or above.'
+                  : 'No performance data yet. Complete practice to surface your focus areas.'}
               </p>
             )}
           </div>
@@ -386,6 +372,54 @@ export default function Dashboard() {
         </div>
       </div>
 
+      <section className="mb-10 lg:mb-14">
+        <div className="mb-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h2 className="font-serif text-xl font-normal tracking-tight text-[#1f1c18] md:text-2xl">
+            Error log overview
+          </h2>
+          <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.2em] text-[#7a7269]">
+            Review loop
+          </span>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            {
+              label: 'Total errors',
+              value: String(errorLogEntries.length),
+              hint: hasErrorData ? 'All logged mistakes' : 'No entries yet',
+            },
+            {
+              label: 'Open reviews',
+              value: String(openErrors),
+              hint: openErrors > 0 ? 'Need follow-up' : 'All reviewed',
+            },
+            {
+              label: 'Due now',
+              value: String(errorsDueNow),
+              hint: errorsDueNow > 0 ? 'Prioritize today' : 'No urgent review',
+            },
+            {
+              label: 'Top error type',
+              value: topErrorCategory ? topErrorCategory.replace(/_/g, ' ') : '—',
+              hint: hasErrorData ? 'Most frequent category' : 'Will appear after logging',
+            },
+          ].map((card) => (
+            <div key={card.label} className="rounded-xl border border-[#e8e4dc] bg-white px-4 py-4 shadow-sm">
+              <p className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7a7269]">
+                {card.label}
+              </p>
+              <p className="mt-1.5 font-serif text-2xl font-normal tracking-tight text-[#1f1c18]">
+                {card.value}
+              </p>
+              <p className="mt-1 text-xs text-[#5c564f]">{card.hint}</p>
+            </div>
+          ))}
+        </div>
+        <Link href="/error-log" className="mt-4 inline-block text-sm font-medium text-[#4a5d4e] underline-offset-4 hover:underline">
+          Open error dashboard
+        </Link>
+      </section>
+
       {/* Four white stat cards — stronger contrast on cream */}
       <div className="mb-10 grid grid-cols-2 gap-3 sm:gap-4 lg:mb-14 lg:grid-cols-4">
         {[
@@ -395,9 +429,9 @@ export default function Dashboard() {
             sub: isOnTrack ? 'On pace this week' : 'Add a review block',
           },
           {
-            eyebrow: 'Plan progress',
-            value: `${planWidePct}%`,
-            sub: 'All tasks in the 12-week plan',
+            eyebrow: 'Accuracy',
+            value: `${avgAll}%`,
+            sub: 'Across topics',
           },
           {
             eyebrow: 'Completion',
@@ -407,7 +441,7 @@ export default function Dashboard() {
           {
             eyebrow: 'Vocabulary',
             value: isClient ? String(totalWordsLearned) : '—',
-            sub: 'Optional — track in your notebook for now',
+            sub: `${wordsThisWeek} this week`,
           },
         ].map((stat) => (
           <div
@@ -430,8 +464,7 @@ export default function Dashboard() {
           By domain
         </h2>
         <p className="mt-1 max-w-xl text-sm text-[#5c564f]">
-          Domain-level accuracy appears when you log practice or errors. Until then, use your plan and weak-area
-          picks to prioritize.
+          Average accuracy where you&apos;ve practiced — use it to decide what to review next.
         </p>
         <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {categoryBars.map((cat) => (
