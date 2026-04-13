@@ -21,6 +21,33 @@ export const WEAK_AREA_LABEL_TO_TOPIC: Record<string, QuantTopic> = {
   Probability: 'data_analysis_probability',
 };
 
+/** Labels shown in onboarding / settings (same order as onboarding UI). */
+export const ONBOARDING_WEAK_AREA_LABELS = [
+  'Fractions',
+  'Algebra',
+  'Geometry',
+  'Data Analysis',
+  'Probability',
+] as const;
+
+export function toDateInputValue(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+export function weakTopicsToLabels(topics: QuantTopic[]): string[] {
+  const labels: string[] = [];
+  for (const t of topics) {
+    const entry = (Object.entries(WEAK_AREA_LABEL_TO_TOPIC) as [string, QuantTopic][]).find(
+      ([, v]) => v === t
+    );
+    if (entry) labels.push(entry[0]);
+  }
+  return [...new Set(labels)];
+}
+
 export function computeDaysRemaining(targetGREDate: Date): number {
   const start = new Date();
   start.setHours(0, 0, 0, 0);
@@ -103,6 +130,30 @@ export function buildStudyPlanForUser(user: UserProfile): StudyPlan {
   plan.targetGREDate = user.targetGREDate;
   plan.daysRemaining = computeDaysRemaining(user.targetGREDate);
   return plan;
+}
+
+export function patchPersistedPlanSettings(
+  prev: PersistedUserStateV1,
+  patch: {
+    targetGREDate?: string;
+    studyStartDate?: string;
+    weeklyHoursTarget?: number;
+    weakAreaLabels?: string[];
+  }
+): PersistedUserStateV1 {
+  const weakAreasFromOnboarding =
+    patch.weakAreaLabels !== undefined
+      ? patch.weakAreaLabels
+          .map((label) => WEAK_AREA_LABEL_TO_TOPIC[label])
+          .filter((t): t is QuantTopic => t !== undefined)
+      : prev.weakAreasFromOnboarding;
+  return {
+    ...prev,
+    targetGREDate: patch.targetGREDate ?? prev.targetGREDate,
+    studyStartDate: patch.studyStartDate ?? prev.studyStartDate,
+    weeklyHoursTarget: patch.weeklyHoursTarget ?? prev.weeklyHoursTarget,
+    weakAreasFromOnboarding,
+  };
 }
 
 export function createInitialPersistedState(params: {

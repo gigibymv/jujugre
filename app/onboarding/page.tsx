@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useUserPlan } from '@/components/user-plan-provider';
+import { ONBOARDING_WEAK_AREA_LABELS } from '@/lib/user-state';
 import { useState } from 'react';
 import { ChevronRight, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
@@ -20,7 +21,7 @@ export default function OnboardingPage() {
   const [weakAreas, setWeakAreas] = useState<string[]>([]);
   const [agreed, setAgreed] = useState(false);
 
-  const weakAreaOptions = ['Fractions', 'Algebra', 'Geometry', 'Data Analysis', 'Probability'];
+  const weakAreaOptions = [...ONBOARDING_WEAK_AREA_LABELS];
 
   const toggleWeakArea = (area: string) => {
     setWeakAreas((prev) => (prev.includes(area) ? prev.filter((a) => a !== area) : [...prev, area]));

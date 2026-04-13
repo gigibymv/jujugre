@@ -48,7 +48,8 @@ function createModule(
           description: `Learn ${title}`,
           taskType: "lesson" as const,
           estimatedMinutes: 35,
-          completed: weekNumber < 2 && partNum <= 2,
+          /** Progress comes only from persisted taskCompletion — never seed demo checkmarks */
+          completed: false,
         },
         {
           id: `${id}_p${partNum}_t2`,
@@ -57,7 +58,7 @@ function createModule(
           description: `Apply concepts`,
           taskType: "practice" as const,
           estimatedMinutes: 25,
-          completed: weekNumber < 2 && partNum === 1,
+          completed: false,
         },
       ],
       estimatedHours: 3,

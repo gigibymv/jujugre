@@ -7,6 +7,7 @@ import {
   createInitialPersistedState,
   loadPersistedState,
   mergeUserProfile,
+  patchPersistedPlanSettings,
   savePersistedState,
   type PersistedUserStateV1,
 } from '@/lib/user-state';
@@ -23,6 +24,8 @@ import {
 
 type UserPlanContextValue = {
   hydrated: boolean;
+  /** Raw saved state (null after full reset or first visit). Exposed for settings sync. */
+  persisted: PersistedUserStateV1 | null;
   user: UserProfile;
   studyPlan: StudyPlan;
   hasCompletedOnboarding: boolean;
@@ -32,6 +35,14 @@ type UserPlanContextValue = {
     weakAreaLabels: string[];
   }) => void;
   setTaskCompleted: (taskId: string, completed: boolean) => void;
+  /** Clears task checkmarks only; keeps dates, weak areas, onboarding. */
+  clearStudyProgress: () => void;
+  updatePlanSettings: (input: {
+    targetGREDate?: string;
+    studyStartDate?: string;
+    weeklyHoursTarget?: number;
+    weakAreaLabels?: string[];
+  }) => void;
   resetLocalState: () => void;
 };
 
@@ -88,6 +99,32 @@ export function UserPlanProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const clearStudyProgress = useCallback(() => {
+    setPersisted((prev) => {
+      if (!prev) return prev;
+      const next: PersistedUserStateV1 = { ...prev, taskCompletion: {} };
+      savePersistedState(next);
+      return next;
+    });
+  }, []);
+
+  const updatePlanSettings = useCallback(
+    (input: {
+      targetGREDate?: string;
+      studyStartDate?: string;
+      weeklyHoursTarget?: number;
+      weakAreaLabels?: string[];
+    }) => {
+      setPersisted((prev) => {
+        if (!prev) return prev;
+        const next = patchPersistedPlanSettings(prev, input);
+        savePersistedState(next);
+        return next;
+      });
+    },
+    []
+  );
+
   const resetLocalState = useCallback(() => {
     clearPersistedState();
     setPersisted(null);
@@ -96,20 +133,25 @@ export function UserPlanProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       hydrated,
+      persisted,
       user,
       studyPlan,
       hasCompletedOnboarding: Boolean(persisted?.onboardingCompletedAt),
       completeOnboarding,
       setTaskCompleted,
+      clearStudyProgress,
+      updatePlanSettings,
       resetLocalState,
     }),
     [
       hydrated,
+      persisted,
       user,
       studyPlan,
-      persisted?.onboardingCompletedAt,
       completeOnboarding,
       setTaskCompleted,
+      clearStudyProgress,
+      updatePlanSettings,
       resetLocalState,
     ]
   );
