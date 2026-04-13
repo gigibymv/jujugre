@@ -58,7 +58,7 @@ export default function AppNav() {
     );
 
   return (
-    <header className="fixed top-0 z-50 w-full border-b border-primary-foreground/15 bg-primary shadow-[0_4px_24px_-4px_rgba(0,0,0,0.2)]">
+    <header className="fixed top-0 z-50 w-full border-b border-primary-foreground/15 bg-primary pt-[env(safe-area-inset-top,0px)] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.2)]">
       <div className="mx-auto flex h-16 max-w-screen-2xl items-center justify-between gap-3 px-4 sm:gap-6 sm:px-8 lg:px-12">
         <Link
           href="/"

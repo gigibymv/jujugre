@@ -20,7 +20,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
         <main
           id="main-content"
           tabIndex={-1}
-          className="bg-[#f9f8f3] outline-none pt-24 sm:pt-28 md:pt-32"
+          className="bg-[#f9f8f3] outline-none pt-[calc(6rem+env(safe-area-inset-top,0px))] sm:pt-[calc(7rem+env(safe-area-inset-top,0px))] md:pt-[calc(8rem+env(safe-area-inset-top,0px))] pb-[max(6rem,calc(env(safe-area-inset-bottom,0px)+4.5rem))] md:pb-12"
         >
           {children}
         </main>

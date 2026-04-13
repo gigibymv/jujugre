@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Newsreader } from 'next/font/google'
 import './globals.css'
 import { AppProviders } from './providers'
@@ -16,6 +16,13 @@ export const metadata: Metadata = {
   icons: {
     icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
   },
+}
+
+/** Lets iOS use env(safe-area-inset-*) so content clears the home indicator & toolbars. */
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({

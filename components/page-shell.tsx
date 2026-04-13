@@ -23,7 +23,7 @@ export function PageShell({
       >
         <div
           className={cn(
-            'mx-auto w-full max-w-screen-2xl px-4 pb-16 sm:px-8 lg:px-12 lg:pb-20',
+            'mx-auto w-full max-w-screen-2xl px-3.5 pb-[max(5rem,calc(env(safe-area-inset-bottom,0px)+3.5rem))] sm:px-8 sm:pb-16 lg:px-12 lg:pb-20',
             narrow && 'max-w-3xl'
           )}
         >
@@ -42,7 +42,7 @@ export function PageShell({
     >
       <div
         className={cn(
-          'mx-auto w-full px-4 py-6 sm:px-5 md:px-8 md:py-10',
+          'mx-auto w-full px-3.5 py-5 sm:px-5 md:px-8 md:py-10',
           narrow ? 'max-w-3xl' : 'max-w-5xl'
         )}
       >
@@ -50,7 +50,7 @@ export function PageShell({
           className={cn(
             'rounded-2xl border border-border/50 bg-background',
             'shadow-paper ring-1 ring-foreground/[0.05]',
-            'px-5 py-8 md:px-8 md:py-10'
+            'px-4 py-7 sm:px-5 md:px-8 md:py-10'
           )}
         >
           {children}

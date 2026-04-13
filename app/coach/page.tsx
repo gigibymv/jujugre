@@ -366,7 +366,7 @@ export default function CoachPage() {
               </div>
             )}
 
-          <div className="border-t border-border p-4 md:p-5">
+          <div className="border-t border-border p-4 pb-5 max-md:pb-6 md:p-5">
             <div className="flex gap-2">
               <Input
                 placeholder="Ask your coach anything…"
