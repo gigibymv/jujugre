@@ -459,7 +459,7 @@ export default function Dashboard() {
         ))}
       </div>
 
-      <section className="-mx-4 rounded-2xl border border-[#e5e1d8] bg-[#f3f1eb] px-4 py-8 sm:-mx-8 sm:px-8 lg:-mx-12 lg:px-10 lg:py-10">
+      <section className="rounded-2xl border border-[#e5e1d8] bg-[#f3f1eb] px-4 py-8 sm:px-8 lg:px-10 lg:py-10">
         <h2 className="font-serif text-xl font-normal tracking-tight text-[#1f1c18] md:text-2xl">
           By domain
         </h2>

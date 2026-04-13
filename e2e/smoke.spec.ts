@@ -5,8 +5,8 @@ test.describe('Navigation & shell', () => {
     await page.goto('/');
     await expect(page.getByRole('link', { name: /Σ Jujugre/i })).toBeVisible();
     await expect(page.getByText(/Weekly progression/i)).toBeVisible();
-    await expect(page.getByText(/Focus areas/i)).toBeVisible();
-    await expect(page.getByText(/Next actions/i)).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Focus areas/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Next actions/i })).toBeVisible();
   });
 
   test('primary nav routes (desktop)', async ({ page }) => {
