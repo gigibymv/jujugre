@@ -17,6 +17,7 @@ import {
   loadPersistedAnalytics,
   type UserAnalyticsState,
 } from '@/lib/user-analytics';
+import { getDailyQuoteForUser, type DailyQuote } from '@/lib/daily-quote';
 import type { DailyCheckIn, ErrorLogEntry, StudyPlan, TopicMastery, UserProfile } from '@/lib/data-schema';
 import {
   createContext,
@@ -37,6 +38,7 @@ type UserPlanContextValue = {
   topicMastery: TopicMastery[];
   dailyCheckIns: DailyCheckIn[];
   errorLogEntries: ErrorLogEntry[];
+  dailyQuote: DailyQuote | null;
   hasCompletedOnboarding: boolean;
   completeOnboarding: (input: {
     targetGREDate: string;
@@ -62,6 +64,7 @@ export function UserPlanProvider({ children }: { children: ReactNode }) {
   const [analytics, setAnalytics] = useState<UserAnalyticsState>(
     createEmptyUserAnalyticsState
   );
+  const [dailyQuote, setDailyQuote] = useState<DailyQuote | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -89,6 +92,17 @@ export function UserPlanProvider({ children }: { children: ReactNode }) {
     const base = buildStudyPlanForUser(user);
     return applyTaskCompletion(base, persisted?.taskCompletion ?? {});
   }, [user, persisted?.taskCompletion]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const lang = window.navigator.language.toLowerCase().startsWith('fr') ? 'fr' : 'en';
+    const quote = getDailyQuoteForUser({
+      userId: user.id,
+      lang,
+      weakTopics: user.weakAreasFromOnboarding,
+    });
+    setDailyQuote(quote);
+  }, [user.id, user.weakAreasFromOnboarding]);
 
   const completeOnboarding = useCallback(
     (input: {
@@ -166,6 +180,7 @@ export function UserPlanProvider({ children }: { children: ReactNode }) {
       topicMastery: analytics.topicMastery,
       dailyCheckIns: analytics.dailyCheckIns,
       errorLogEntries: analytics.errorLogEntries,
+      dailyQuote,
       hasCompletedOnboarding: Boolean(persisted?.onboardingCompletedAt),
       completeOnboarding,
       setTaskCompleted,
@@ -181,6 +196,7 @@ export function UserPlanProvider({ children }: { children: ReactNode }) {
       analytics.topicMastery,
       analytics.dailyCheckIns,
       analytics.errorLogEntries,
+      dailyQuote,
       completeOnboarding,
       setTaskCompleted,
       clearStudyProgress,

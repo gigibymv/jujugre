@@ -29,27 +29,6 @@ const ACCENT = '#4a5d4e';
 const MUTED = '#5c564f';
 const INK = '#1f1c18';
 
-const DAILY_QUOTES = [
-  { text: 'Hard topics are just future strengths waiting to be unlocked.', by: null },
-  { text: 'Precision today builds confidence tomorrow.', by: null },
-  { text: 'Every problem solved is progress made.', by: null },
-  {
-    text: 'The essence of mathematics is not to make simple things complicated, but to make complicated things simple.',
-    by: 'S. Gudder',
-  },
-  { text: "You're learning the exact patterns the GRE tests.", by: null },
-  { text: "Consistency over intensity—you've got this.", by: null },
-  { text: 'Master one concept, and build from there.', by: null },
-  { text: 'Rigor now means clarity on test day.', by: null },
-  { text: 'Your effort is compounding into skill.', by: null },
-];
-
-function getDailyQuote(dateString?: string): (typeof DAILY_QUOTES)[0] {
-  const hashDate = dateString || new Date().toDateString();
-  const hash = hashDate.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  return DAILY_QUOTES[hash % DAILY_QUOTES.length];
-}
-
 function avgAccuracy(topics: TopicMastery[], pred: (t: TopicMastery) => boolean): number {
   const filtered = topics.filter(pred);
   if (!filtered.length) return 0;
@@ -79,15 +58,14 @@ export default function Dashboard() {
     studyPlan: plan,
     topicMastery,
     dailyCheckIns,
+    dailyQuote,
     hasCompletedOnboarding,
     hydrated,
   } = useUserPlan();
   const [isClient, setIsClient] = useState(false);
-  const [dailyQuote, setDailyQuote] = useState<(typeof DAILY_QUOTES)[0] | null>(null);
 
   useEffect(() => {
     setIsClient(true);
-    setDailyQuote(getDailyQuote());
   }, []);
 
   const currentModule = plan.modules.find((m) => m.id === plan.currentModuleId);
