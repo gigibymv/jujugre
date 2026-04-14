@@ -7,9 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useUserPlan } from '@/components/user-plan-provider';
 import type { ErrorCategory, QuantSubtopic, QuestionType, QuantTopic } from '@/lib/data-schema';
+import { compressImageFileToDataUrl } from '@/lib/error-log-screenshot';
 import Link from 'next/link';
 import { CheckCircle2, AlertCircle, Clock, Zap, BookOpen } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function ErrorLogPage() {
   const { hasCompletedOnboarding, errorLogEntries, addErrorLogEntry, setErrorLogReviewed } = useUserPlan();
@@ -19,7 +20,7 @@ export default function ErrorLogPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [screenshotDataUrl, setScreenshotDataUrl] = useState<string | null>(null);
-  const [screenshotFileName, setScreenshotFileName] = useState<string | null>(null);
+  const [screenshotName, setScreenshotName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [newEntry, setNewEntry] = useState({
     topic: 'algebra_linear_equations',
@@ -34,6 +35,25 @@ export default function ErrorLogPage() {
     protocolElements: '',
     reviewInDays: '2',
   });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const sp = new URLSearchParams(window.location.search);
+    if ([...sp.keys()].length === 0) return;
+    if (sp.get('new') === '1') {
+      setIsFormOpen(true);
+    }
+    const next = { ...newEntry };
+    const source = sp.get('source');
+    if (source) next.sourceReference = source.slice(0, 300);
+    const problem = sp.get('problem');
+    if (problem) next.problem = problem.slice(0, 1200);
+    const subtopic = sp.get('subtopic');
+    if (subtopic) next.subtopic = subtopic;
+    setNewEntry(next);
+    window.history.replaceState({}, '', '/error-log');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   let filtered = errorLogEntries;
   if (filterReviewed === 'unreviewed') {
@@ -77,22 +97,13 @@ export default function ErrorLogPage() {
 
   const handleScreenshotSelect = async (file: File | null) => {
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      setFormError('Only image files are supported for screenshots.');
+    const compressed = await compressImageFileToDataUrl(file);
+    if (!compressed.ok) {
+      setFormError(compressed.error);
       return;
     }
-    if (file.size > 4 * 1024 * 1024) {
-      setFormError('Screenshot too large. Max size is 4 MB.');
-      return;
-    }
-    const dataUrl = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result ?? ''));
-      reader.onerror = () => reject(new Error('Failed to read screenshot file.'));
-      reader.readAsDataURL(file);
-    });
-    setScreenshotDataUrl(dataUrl);
-    setScreenshotFileName(file.name);
+    setScreenshotDataUrl(compressed.dataUrl);
+    setScreenshotName(compressed.name);
     setFormError(null);
   };
 
@@ -111,7 +122,7 @@ export default function ErrorLogPage() {
       reviewInDays: '2',
     });
     setScreenshotDataUrl(null);
-    setScreenshotFileName(null);
+    setScreenshotName(null);
     setFormError(null);
   };
 
@@ -143,7 +154,7 @@ export default function ErrorLogPage() {
           .filter(Boolean),
         reviewInDays: reviewInDaysNumber,
         screenshotDataUrl: screenshotDataUrl ?? undefined,
-        screenshotFileName: screenshotFileName ?? undefined,
+        screenshotName: screenshotName ?? undefined,
       });
       resetForm();
       setIsFormOpen(false);
@@ -322,7 +333,7 @@ export default function ErrorLogPage() {
                       className="text-xs"
                       onClick={() => {
                         setScreenshotDataUrl(null);
-                        setScreenshotFileName(null);
+                        setScreenshotName(null);
                         if (fileInputRef.current) fileInputRef.current.value = '';
                       }}
                     >
@@ -342,8 +353,8 @@ export default function ErrorLogPage() {
                     void handleScreenshotSelect(file);
                   }}
                 />
-                {screenshotFileName && (
-                  <p className="mt-2 text-xs text-muted-foreground">Selected: {screenshotFileName}</p>
+                {screenshotName && (
+                  <p className="mt-2 text-xs text-muted-foreground">Selected: {screenshotName}</p>
                 )}
                 {screenshotDataUrl && (
                   <img
@@ -666,7 +677,7 @@ export default function ErrorLogPage() {
                         </p>
                         <img
                           src={error.screenshotDataUrl}
-                          alt={error.screenshotFileName || 'Attached screenshot'}
+                          alt={error.screenshotName || 'Attached screenshot'}
                           className="max-h-56 rounded-md border border-border object-contain"
                         />
                       </div>

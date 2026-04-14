@@ -32,6 +32,7 @@ export const SUBTOPIC_OPTIONS: { value: QuantSubtopic; label: string }[] = [
   { value: 'solving_linear', label: 'Linear equations' },
   { value: 'compound_inequalities', label: 'Inequalities' },
   { value: 'quadratic_formula', label: 'Quadratics' },
+  { value: 'polynomial_operations', label: 'Polynomials & expressions' },
   { value: 'function_notation', label: 'Functions' },
   { value: 'coordinate_distance', label: 'Coordinate distance / geometry' },
   { value: 'angle_relationships', label: 'Lines & angles' },

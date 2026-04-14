@@ -169,6 +169,8 @@ export interface ErrorLogEntry {
   
   // Protocol elements for learning
   protocolElements: string[]; // Concepts, steps, traps addressed
+  screenshotDataUrl?: string;
+  screenshotName?: string;
   
   // Tracking
   createdAt: Date;
@@ -178,8 +180,6 @@ export interface ErrorLogEntry {
   lastOutcome?: DrillOutcome;
   nextAction?: string;
   lastFeedbackAt?: Date;
-  screenshotDataUrl?: string;
-  screenshotFileName?: string;
 }
 
 export interface SourceMaterial {

@@ -10,8 +10,27 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import type { QuantSubtopic } from '@/lib/data-schema';
 import { ArrowLeft, CheckCircle2, Circle } from 'lucide-react';
 import { useMemo } from 'react';
+
+function buildLogMistakeHref(opts: {
+  weekNumber: number;
+  moduleTitle: string;
+  taskTitle: string;
+  taskDescription?: string;
+  subtopic: QuantSubtopic;
+}): string {
+  const source = `Study plan · Week ${opts.weekNumber} · ${opts.moduleTitle} · ${opts.taskTitle}`;
+  const sp = new URLSearchParams();
+  sp.set('new', '1');
+  sp.set('subtopic', opts.subtopic);
+  sp.set('source', source);
+  if (opts.taskDescription?.trim()) {
+    sp.set('problem', opts.taskDescription.trim().slice(0, 800));
+  }
+  return `/error-log?${sp.toString()}`;
+}
 
 export default function ModuleDetailPage() {
   const params = useParams();
@@ -87,34 +106,55 @@ export default function ModuleDetailPage() {
               </p>
             </CardHeader>
             <CardContent className="flex flex-col gap-3 pt-4">
-              {part.tasks.map((task) => (
-                <label
-                  key={task.id}
-                  className="surface-quiet flex w-full cursor-pointer items-start gap-3 p-3 transition-colors duration-150 ease-out hover:bg-muted/50"
-                >
-                  <Checkbox
-                    checked={task.completed}
-                    onCheckedChange={(v) => setTaskCompleted(task.id, v === true)}
-                    className="mt-0.5"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      {task.completed ? (
-                        <CheckCircle2 className="h-4 w-4 shrink-0 text-accent" aria-hidden />
-                      ) : (
-                        <Circle className="h-4 w-4 shrink-0 text-muted-foreground/40" aria-hidden />
-                      )}
-                      <span className="text-sm font-medium text-foreground">{task.title}</span>
+              {part.tasks.map((task) => {
+                const subtopic = (part.subtopics[0] ?? 'factors_multiples_divisibility') as QuantSubtopic;
+                const logHref = buildLogMistakeHref({
+                  weekNumber: module.weekNumber,
+                  moduleTitle: module.title,
+                  taskTitle: task.title,
+                  taskDescription: task.description,
+                  subtopic,
+                });
+                return (
+                  <div
+                    key={task.id}
+                    className="surface-quiet flex w-full flex-col gap-3 p-3 transition-colors duration-150 ease-out hover:bg-muted/50 sm:flex-row sm:items-start sm:justify-between"
+                  >
+                    <div className="flex min-w-0 flex-1 items-start gap-3">
+                      <Checkbox
+                        checked={task.completed}
+                        onCheckedChange={(v) => setTaskCompleted(task.id, v === true)}
+                        className="mt-0.5"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          {task.completed ? (
+                            <CheckCircle2 className="h-4 w-4 shrink-0 text-accent" aria-hidden />
+                          ) : (
+                            <Circle className="h-4 w-4 shrink-0 text-muted-foreground/40" aria-hidden />
+                          )}
+                          <span className="text-sm font-medium text-foreground">{task.title}</span>
+                        </div>
+                        {task.description && (
+                          <p className="mt-1 text-xs text-muted-foreground">{task.description}</p>
+                        )}
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          ~{task.estimatedMinutes} min · {task.taskType}
+                        </p>
+                      </div>
                     </div>
-                    {task.description && (
-                      <p className="ml-6 mt-1 text-xs text-muted-foreground">{task.description}</p>
-                    )}
-                    <p className="ml-6 mt-1 text-xs text-muted-foreground">
-                      ~{task.estimatedMinutes} min · {task.taskType}
-                    </p>
+                    <div className="flex shrink-0 sm:pt-0.5">
+                      <Link
+                        href={logHref}
+                        className="text-xs font-medium text-accent underline-offset-4 hover:underline"
+                      >
+                        Log mistake
+                      </Link>
+                    </div>
                   </div>
-                </label>
-              ))}
+                );
+              })}
             </CardContent>
           </Card>
         ))}
