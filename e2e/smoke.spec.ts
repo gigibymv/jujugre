@@ -145,30 +145,30 @@ test.describe('Error log create + persistence', () => {
     await page.goto('/error-log');
     await page.getByRole('button', { name: /Add error/i }).click();
 
-    await page.getByLabel('Topic').fill('algebra_linear_equations');
-    await page.getByLabel('Subtopic').fill('solving_linear');
-    await page.getByLabel('Error category').fill('sign_error');
-    await page.getByLabel('Question type').fill('multiple_choice_single');
-    await page.getByLabel('Problem statement').fill('If -3x > 9, what is x?');
-    await page.getByLabel('Your answer').fill('x > -3');
-    await page.getByLabel('Correct answer').fill('x < -3');
-    await page.getByLabel('Explanation').fill('You must flip the inequality when dividing by a negative.');
-    await page.getByLabel('Review in (days)').fill('2');
-    await page
-      .getByLabel('Screenshot (optional)')
-      .setInputFiles('e2e/fixtures/error-shot.png');
+    const form = page.getByRole('form', { name: 'Add error form' });
+    // "Subtopic" contains "topic"; use exact label match for Topic.
+    await form.getByLabel('Topic', { exact: true }).fill('algebra_linear_equations');
+    await form.getByLabel('Subtopic').fill('solving_linear');
+    await form.getByLabel('Error category').fill('sign_error');
+    await form.getByLabel('Question type').fill('multiple_choice_single');
+    await form.getByLabel('Problem statement').fill('If -3x > 9, what is x?');
+    await form.getByLabel('Your answer').fill('x > -3');
+    await form.getByLabel('Correct answer').fill('x < -3');
+    await form.getByLabel('Explanation').fill('You must flip the inequality when dividing by a negative.');
+    await form.getByLabel(/Review in days/i).fill('2');
+    await form.locator('#error-screenshot').setInputFiles('e2e/fixtures/error-shot.png');
 
-    await page.getByRole('button', { name: /Save error entry/i }).click();
+    await form.getByRole('button', { name: /Save error/i }).click();
 
     await expect(page.getByText('If -3x > 9, what is x?')).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText('Screenshot attached')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('img', { name: /Attached screenshot/i })).toBeVisible({ timeout: 15000 });
     await expect(page.getByText('Total errors').locator('..').locator('..').getByText('1')).toBeVisible({
       timeout: 15000,
     });
 
     await page.reload();
     await expect(page.getByText('If -3x > 9, what is x?')).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText('Screenshot attached')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('img', { name: /Attached screenshot/i })).toBeVisible({ timeout: 15000 });
   });
 });
 
@@ -176,7 +176,7 @@ test.describe('Error log persistence', () => {
   test('add error with screenshot and persists after reload', async ({ page }) => {
     await page.goto('/error-log');
 
-    await page.getByRole('button', { name: /Add new error/i }).click();
+    await page.getByRole('button', { name: /Add error/i }).click();
 
     await page.locator('input[name="topic"]').fill('algebra_linear_equations');
     await page.locator('input[name="subtopic"]').fill('solving_linear');
