@@ -311,7 +311,7 @@ export default function Dashboard() {
               <p className="rounded-xl bg-[#f3f1eb] px-4 py-5 text-sm text-[#5c564f]">
                 {hasAnalyticsData
                   ? 'Strong work — all areas at 70% or above.'
-                  : 'No performance data yet. Complete practice to surface your focus areas.'}
+                  : 'No performance data yet. Complete practice to surface weak topics.'}
               </p>
             )}
           </div>

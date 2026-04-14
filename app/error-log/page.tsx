@@ -180,7 +180,7 @@ export default function ErrorLogPage() {
         <CardContent className="space-y-3">
           {!isFormOpen ? (
             <Button type="button" onClick={() => setIsFormOpen(true)} className="w-full sm:w-auto">
-              Add new error
+              Add error
             </Button>
           ) : (
             <form
@@ -677,7 +677,7 @@ export default function ErrorLogPage() {
                         </p>
                         <img
                           src={error.screenshotDataUrl}
-                          alt={error.screenshotName || 'Attached screenshot'}
+                          alt="Attached screenshot"
                           className="max-h-56 rounded-md border border-border object-contain"
                         />
                       </div>
