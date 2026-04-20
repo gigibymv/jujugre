@@ -181,6 +181,11 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html,
+  body {
+    max-width: 100%;
+    overflow-x: clip;
+  }
   body {
     @apply text-foreground antialiased;
     font-feature-settings: 'kern' 1, 'liga' 1;
